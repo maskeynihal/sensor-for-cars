@@ -1,3 +1,8 @@
+// NOTE: superseded. This is the early OLED-only animation with NO sensors.
+// The final build (DS18B20 water + DHT22 air + buzzer) is in
+// ../water_monitor/water_monitor.ino  --  see ../docs/README.md
+// Kept for reference / history only.
+
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
