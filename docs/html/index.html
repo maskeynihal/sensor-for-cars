@@ -342,7 +342,7 @@
       happens <em>inside the chip</em> — that is where the sensing physics lives. Section 5 (LM35 /
       thermistor) shows the classic case where the Arduino's own ADC does the work.</div>
 
-      <h4>1 · The physics — heat becomes a voltage</h4>
+      <h4 id="s-physics" style="scroll-margin-top:16px">1 · The physics — heat becomes a voltage</h4>
       <table>
         <tr><th>Mechanism</th><th>Used by</th><th>What changes with temperature</th></tr>
         <tr><td>Silicon bandgap</td><td>DS18B20, DHT22, LM35, TMP36</td><td>forward voltage of a diode/BJT junction</td></tr>
@@ -361,7 +361,7 @@
    |           \____
    +------------------> temperature</pre></div>
 
-      <h4>2 · Inside the DS18B20 — analog → digital, all on-chip</h4>
+      <h4 id="s-ds" style="scroll-margin-top:16px">2 · Inside the DS18B20 — analog → digital, all on-chip</h4>
       <div class="codeblock"><pre> [junction/PTAT]        analog voltage ∝ temperature
         |
  [analog front-end]     amplifies + references the PTAT voltage
@@ -384,7 +384,7 @@
       So raw <code>0x0191</code> = 401, and 401 ÷ 16 = <code>25.0625 °C</code>. The library does that
       division, which is why you get a <code>float</code> back.</p>
 
-      <h4>3 · The 1-Wire protocol — how the number crosses the pin</h4>
+      <h4 id="s-1wire" style="scroll-margin-top:16px">3 · The 1-Wire protocol — how the number crosses the pin</h4>
       <p>The DS18B20 uses Dallas <strong>1-Wire</strong>: one data line (<code>D2</code>) carries both
       directions. The line idles HIGH, so it needs the <strong>4.7 kΩ pull-up</strong> to 5 V — both
       ends talk by briefly pulling it LOW. No pull-up → the line floats → you see <code>W:--</code>.</p>
@@ -403,7 +403,7 @@
       <div class="codeblock"><button class="copybtn">Copy</button><pre>if (t != DEVICE_DISCONNECTED_C) { waterOK = true; }
 else waterOK = false;   // missing probe → W:-- , never false-triggers the buzzer</pre></div>
 
-      <h4>4 · Inside the DHT22 — same idea, different packaging</h4>
+      <h4 id="s-dht" style="scroll-margin-top:16px">4 · Inside the DHT22 — same idea, different packaging</h4>
       <ul>
         <li><strong>Humidity</strong>: a capacitor whose dielectric absorbs water vapour. More moisture → higher capacitance (analog), converted to %RH on-chip.</li>
         <li><strong>Temperature</strong>: a bandgap element, same principle as section 1.</li>
@@ -418,7 +418,7 @@ float h = dht.readHumidity();      // line 203 — %RH</pre></div>
       <div class="codeblock"><button class="copybtn">Copy</button><pre>if (!isnan(t) && !isnan(h)) { airOK = true; }
 else airOK = false;</pre></div>
 
-      <h4>5 · The "true analog" case (for comparison): LM35</h4>
+      <h4 id="s-analog" style="scroll-margin-top:16px">5 · The "true analog" case (for comparison): LM35</h4>
       <p>Not used here, but this is what "analog temperature sensing" usually means — the Arduino's own
       10-bit ADC does the conversion. An LM35 outputs <strong>10 mV per °C</strong>:</p>
       <div class="codeblock"><button class="copybtn">Copy</button><pre>int raw = analogRead(A0);              // 0..1023 (10-bit ADC)
@@ -427,7 +427,7 @@ float celsius = volts * 100.0;         // 10 mV/°C → ×100</pre></div>
       <p>Each ADC count ≈ 4.9 mV ≈ 0.49 °C of resolution. Moving the ADC <em>inside</em> the chip
       (like the DS18B20) avoids noise pickup, wire resistance and rail wobble corrupting a long analog wire.</p>
 
-      <h4>6 · The °C → °F conversion</h4>
+      <h4 id="s-cf" style="scroll-margin-top:16px">6 · The °C → °F conversion</h4>
       <div class="codeblock"><button class="copybtn">Copy</button><pre>waterF = t * 9.0 / 5.0 + 32.0;   // °F = °C × 9/5 + 32
 // 25 × 9 / 5 + 32 = 77.0 °F</pre></div>
       <div class="warnbox">Write <code>9.0 / 5.0</code>, <strong>not</strong> <code>9 / 5</code>.
@@ -624,21 +624,58 @@ arduino-cli upload \
   var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
   var panes = Array.prototype.slice.call(document.querySelectorAll('.tabpane'));
   var navgroups = Array.prototype.slice.call(document.querySelectorAll('.navgroup'));
+
+  // map every section id -> the tab (pane) it lives in
+  var sectionTab = {};
+  panes.forEach(function(p){
+    p.querySelectorAll('section[id]').forEach(function(s){ sectionTab[s.id] = p.dataset.pane; });
+  });
+
   function setTab(name){
     tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab===name); });
     panes.forEach(function(p){ p.classList.toggle('active', p.dataset.pane===name); });
     navgroups.forEach(function(g){ g.classList.toggle('active', g.dataset.navtab===name); });
     try{ localStorage.setItem('lc78-tab', name); }catch(e){}
-    window.scrollTo(0,0);
     spy();
   }
-  tabs.forEach(function(t){ t.addEventListener('click',function(){ setTab(t.dataset.tab); }); });
-  document.querySelectorAll('.navgroup[data-navtab="explainer"] a').forEach(function(a){
-    a.addEventListener('click',function(){ setTab('explainer'); });
+
+  // navigate to a #hash: switch to that section's tab, then scroll to it
+  function goTo(hash, push){
+    var id = (hash||'').replace(/^#/,'');
+    var target = id && document.getElementById(id);
+    if(target){
+      var tab = sectionTab[id] || 'howto';
+      setTab(tab);
+      // scroll after the pane is visible
+      target.scrollIntoView({behavior:'smooth', block:'start'});
+      if(push && ('#'+id)!==location.hash){ history.pushState(null,'','#'+id); }
+    } else {
+      // no/!unknown hash — just show the active/saved tab at the top
+      window.scrollTo(0,0);
+    }
+    spy();
+  }
+
+  // tab buttons clear the hash (go to that tab's top)
+  tabs.forEach(function(t){
+    t.addEventListener('click',function(){
+      setTab(t.dataset.tab);
+      history.pushState(null,'','#'+(t.dataset.tab==='explainer'?'sensors':'what'));
+      var first = document.getElementById(t.dataset.tab==='explainer'?'sensors':'what');
+      if(first) first.scrollIntoView({behavior:'smooth', block:'start'});
+    });
   });
-  document.querySelectorAll('.navgroup[data-navtab="howto"] a').forEach(function(a){
-    a.addEventListener('click',function(){ setTab('howto'); });
+
+  // nav links drive the hash (let the browser set it, we handle hashchange)
+  Array.prototype.slice.call(document.querySelectorAll('nav a[href^="#"]')).forEach(function(a){
+    a.addEventListener('click',function(e){
+      e.preventDefault();
+      goTo(a.getAttribute('href'), true);
+    });
   });
+
+  // back/forward and manual URL edits
+  window.addEventListener('hashchange', function(){ goTo(location.hash, false); });
 
   // copy buttons
   document.querySelectorAll('.copybtn').forEach(function(btn){
@@ -709,14 +746,27 @@ arduino-cli upload \
       if(s && s.offsetTop<=y) idx=i;
     });
     Array.prototype.slice.call(document.querySelectorAll('nav a')).forEach(function(a){ a.classList.remove('active'); });
-    if(links[idx]) links[idx].classList.add('active');
+    if(links[idx]){
+      links[idx].classList.add('active');
+      // keep the URL hash in sync with the section in view (no history spam)
+      var h = links[idx].getAttribute('href');
+      if(h && h.charAt(0)==='#' && document.getElementById(h.slice(1)) && location.hash!==h){
+        history.replaceState(null,'',h);
+      }
+    }
   }
   window.addEventListener('scroll', spy);
 
-  // restore saved tab (default howto)
-  var savedTab='howto';
-  try{ savedTab = localStorage.getItem('lc78-tab') || 'howto'; }catch(e){}
-  setTab(savedTab);
+  // on load: a URL hash wins; else the saved tab; else How-to
+  var initialHash = location.hash;
+  if(initialHash && document.getElementById(initialHash.slice(1))){
+    goTo(initialHash, false);
+  } else {
+    var savedTab='howto';
+    try{ savedTab = localStorage.getItem('lc78-tab') || 'howto'; }catch(e){}
+    setTab(savedTab);
+    spy();
+  }
 })();
 </script>
 </body>
