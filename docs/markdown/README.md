@@ -1,6 +1,6 @@
 # LC78 OFFROAD -- Water + Air Monitor: full documentation
 
-Firmware: [`sketches/water_monitor/water_monitor.ino`](../sketches/water_monitor/water_monitor.ino)
+Firmware: [`sketches/water_monitor/water_monitor.ino`](../../sketches/water_monitor/water_monitor.ino)
 
 ---
 
@@ -175,7 +175,7 @@ Install via **Tools -> Manage Libraries**:
 4. **DallasTemperature** (Miles Burton)
 5. **DHT sensor library** (Adafruit) -- say **yes** to Adafruit Unified Sensor
 
-All of these are already vendored under [`../libraries/`](../libraries).
+All of these are already vendored under [`../libraries/`](../../libraries).
 
 ---
 

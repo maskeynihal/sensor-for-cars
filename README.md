@@ -23,7 +23,8 @@ All sketches live under `sketches/`.
 1. Open `sketches/water_monitor/water_monitor.ino` in the Arduino IDE.
 2. Install libraries (see docs): Adafruit SH110X, Adafruit GFX, OneWire,
    DallasTemperature, DHT sensor library (+ Adafruit Unified Sensor).
-3. Board: **Arduino UNO R4 WiFi**. Wire per [`docs/`](docs/README.md).
+3. Board: **Arduino UNO R4 WiFi**. Wire per [`docs/markdown/README.md`](docs/markdown/README.md)
+   (or open the interactive [`docs/html/index.html`](docs/html/index.html) in a browser).
 4. Upload. Open Serial Monitor at **9600 baud**.
 
 ## Build from the command line (arduino-cli)
