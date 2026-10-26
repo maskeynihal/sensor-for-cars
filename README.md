@@ -1,7 +1,7 @@
 # sensor-for-cars
 
 Arduino UNO R4 WiFi water + air monitor with an animated 1.3" SH1106 OLED
-("LC78 OFFROAD", built by FriedRust).
+("LC78 OFFROAD").
 
 ## Folder map
 

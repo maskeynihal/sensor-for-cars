@@ -2,6 +2,8 @@
 
 Firmware: [`sketches/water_monitor/water_monitor.ino`](../../sketches/water_monitor/water_monitor.ino)
 
+Deep dive: [How the temperature sensors work — analog physics to °C/°F](sensor-explainer.md)
+
 ---
 
 ## 1. What it does
