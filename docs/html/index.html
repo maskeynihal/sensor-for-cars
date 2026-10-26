@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LC78 OFFROAD — Water + Air Monitor Docs</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --ink:#e6e9ef; --muted:#9aa4b2;
+    --line:#2a2f3a; --accent:#ff7a2f; --accent2:#4ea1ff; --ok:#2ecc71; --warn:#f5c04e;
+    --hot:#ff5252; --cold:#4ea1ff; --code:#0b0d11; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  a{color:var(--accent2); text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,pre,kbd{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+
+  /* layout */
+  .wrap{display:flex; min-height:100vh}
+  nav{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow-y:auto;
+    width:250px; min-width:250px; background:var(--panel); border-right:1px solid var(--line);
+    padding:20px 14px;
+  }
+  nav h1{font-size:15px; margin:0 0 4px; color:var(--accent)}
+  nav .sub{font-size:12px; color:var(--muted); margin-bottom:16px}
+  nav a{display:block; color:var(--muted); padding:7px 10px; border-radius:8px; font-size:13.5px}
+  nav a:hover{background:var(--panel2); color:var(--ink); text-decoration:none}
+  nav a.active{background:var(--accent); color:#111; font-weight:600}
+  nav .progwrap{margin:14px 6px 4px; font-size:12px; color:var(--muted)}
+  .bar{height:8px; background:var(--panel2); border-radius:99px; overflow:hidden; margin-top:6px}
+  .bar>i{display:block; height:100%; width:0; background:var(--ok); transition:width .3s}
+
+  main{flex:1; max-width:900px; padding:34px 40px 120px; margin:0 auto}
+  header.top{margin-bottom:10px}
+  header.top h2{font-size:26px; margin:0 0 6px}
+  .pill{display:inline-block; background:var(--panel2); border:1px solid var(--line);
+    color:var(--muted); font-size:12px; padding:3px 10px; border-radius:99px; margin-right:6px}
+
+  section{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px 24px; margin:18px 0}
+  section h3{margin:0 0 14px; font-size:19px; display:flex; align-items:center; gap:10px}
+  section h3 .n{background:var(--accent); color:#111; font-size:13px; width:26px; height:26px;
+    display:grid; place-items:center; border-radius:7px; font-weight:700}
+  section h4{margin:18px 0 8px; font-size:15px; color:var(--accent2)}
+
+  table{width:100%; border-collapse:collapse; margin:6px 0; font-size:14px}
+  th,td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top}
+  th{background:var(--panel2); color:var(--ink); font-weight:600}
+  td code,th code{background:var(--code); padding:1px 6px; border-radius:5px}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+
+  ul{padding-left:20px} li{margin:4px 0}
+  .note{background:rgba(78,161,255,.08); border-left:3px solid var(--accent2);
+    padding:10px 14px; border-radius:8px; margin:12px 0; font-size:14px}
+  .warnbox{background:rgba(245,192,78,.08); border-left:3px solid var(--warn);
+    padding:10px 14px; border-radius:8px; margin:12px 0; font-size:14px}
+
+  /* code block + copy */
+  .codeblock{position:relative; margin:12px 0}
+  pre{background:var(--code); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; overflow-x:auto; font-size:13px; margin:0}
+  .copybtn{position:absolute; top:8px; right:8px; background:var(--panel2); color:var(--muted);
+    border:1px solid var(--line); border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer}
+  .copybtn:hover{color:var(--ink); border-color:var(--accent)}
+  .copybtn.done{color:var(--ok); border-color:var(--ok)}
+
+  /* checklist */
+  .steps{list-style:none; padding:0; margin:0; counter-reset:s}
+  .steps li{counter-increment:s; display:flex; gap:14px; align-items:flex-start;
+    padding:14px; border:1px solid var(--line); border-radius:10px; margin:10px 0;
+    background:var(--panel2); cursor:pointer; transition:.15s; user-select:none}
+  .steps li:hover{border-color:var(--accent2)}
+  .steps li .box{width:26px; height:26px; min-width:26px; border:2px solid var(--muted);
+    border-radius:7px; display:grid; place-items:center; font-weight:700; color:var(--muted)}
+  .steps li .box::before{content:counter(s)}
+  .steps li.done{background:rgba(46,204,113,.09); border-color:var(--ok)}
+  .steps li.done .box{background:var(--ok); border-color:var(--ok); color:#06240f}
+  .steps li.done .box::before{content:"✓"}
+  .steps li.done .txt{color:var(--muted)}
+  .steps .txt strong{color:var(--ink)}
+  .steps li.done .txt strong{text-decoration:line-through}
+
+  /* buzzer visualizer */
+  .buzz{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0}
+  .zone{flex:1; min-width:150px; border:1px solid var(--line); border-radius:10px; padding:14px;
+    cursor:pointer; transition:.15s; background:var(--panel2)}
+  .zone:hover{transform:translateY(-2px)}
+  .zone.active{border-width:2px}
+  .zone .rng{font-size:13px; color:var(--muted)}
+  .zone .st{font-size:17px; font-weight:700; margin:4px 0}
+  .zone.cold.active{border-color:var(--cold)} .zone.cold .st{color:var(--cold)}
+  .zone.warn.active{border-color:var(--warn)} .zone.warn .st{color:var(--warn)}
+  .zone.hot.active{border-color:var(--hot)} .zone.hot .st{color:var(--hot)}
+  .buzzout{border:1px solid var(--line); border-radius:10px; padding:16px; background:var(--code)}
+  .dot{display:inline-block; width:14px; height:14px; border-radius:50%; background:#555;
+    margin-right:8px; vertical-align:middle}
+  .dot.on{box-shadow:0 0 12px currentColor}
+  .dot.cold{color:var(--cold)} .dot.warn{color:var(--warn)} .dot.hot{color:var(--hot)}
+
+  /* svg diagram */
+  .diagram{background:var(--code); border:1px solid var(--line); border-radius:12px; padding:10px}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-top:10px}
+  .legend span{display:flex; align-items:center; gap:6px}
+  .lk{width:22px; height:3px; border-radius:2px; display:inline-block}
+  svg .wire{transition:.15s; cursor:pointer}
+  svg .wire:hover{stroke-width:4.5}
+  .pin{fill:var(--panel2); stroke:var(--line)}
+  .lbl{fill:var(--ink); font:12px monospace}
+  .comp{fill:var(--panel); stroke:var(--accent)}
+
+  footer{color:var(--muted); font-size:12px; text-align:center; margin-top:30px}
+
+  /* tabs */
+  .tabs{display:flex; gap:8px; margin:18px 0 4px; border-bottom:1px solid var(--line)}
+  .tab{background:none; border:none; color:var(--muted); font-size:15px; font-weight:600;
+    padding:10px 18px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--accent); border-bottom-color:var(--accent)}
+  .tabpane{display:none}
+  .tabpane.active{display:block}
+  nav .navgroup{display:none}
+  nav .navgroup.active{display:block}
+  nav .grouphdr{font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--accent); margin:4px 8px 6px; font-weight:700}
+  @media(max-width:780px){
+    nav{display:none} main{padding:20px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <h1>LC78 OFFROAD</h1>
+    <div class="sub">Water + Air Monitor</div>
+    <div class="navgroup active" data-navtab="howto">
+      <div class="grouphdr">How-to</div>
+      <a href="#what">1 · What it does</a>
+      <a href="#bom">2 · Hardware (BOM)</a>
+      <a href="#pins">3 · Pin map</a>
+      <a href="#circuit">4 · Circuit diagram</a>
+      <a href="#buzzer">5 · Buzzer logic</a>
+      <a href="#display">6 · Display layout</a>
+      <a href="#serial">7 · Serial output</a>
+      <a href="#timing">8 · Read timing</a>
+      <a href="#libs">9 · Libraries</a>
+      <a href="#cli">9b · Build (arduino-cli)</a>
+      <a href="#bringup">10 · Bring-up steps</a>
+      <a href="#trouble">11 · Troubleshooting</a>
+      <a href="#tuning">12 · Tuning</a>
+      <div class="progwrap">
+        Bring-up progress
+        <div class="bar"><i id="progbar"></i></div>
+        <span id="progtxt">0 / 6 steps</span>
+      </div>
+    </div>
+    <div class="navgroup" data-navtab="explainer">
+      <div class="grouphdr">Explainer</div>
+      <a href="#sensors">How the sensors work</a>
+      <a href="#s-physics">· 1 · The physics</a>
+      <a href="#s-ds">· 2 · Inside the DS18B20</a>
+      <a href="#s-1wire">· 3 · The 1-Wire protocol</a>
+      <a href="#s-dht">· 4 · Inside the DHT22</a>
+      <a href="#s-analog">· 5 · True analog (LM35)</a>
+      <a href="#s-cf">· 6 · °C → °F</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="top">
+      <h2>LC78 OFFROAD — Water + Air Monitor</h2>
+      <div>
+        <span class="pill">Arduino UNO R4 WiFi</span>
+        <span class="pill">SH1106 OLED</span>
+        <span class="pill">DS18B20 + DHT22</span>
+        <span class="pill">active buzzer</span>
+      </div>
+      <div class="note">Firmware: <code>sketches/water_monitor/water_monitor.ino</code>.
+      This is the interactive version of <a href="../markdown/README.md">README.md</a> — same content, click-through for newcomers.</div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="howto">🔧 How-to (setup)</button>
+      <button class="tab" data-tab="explainer">📘 Explainer (how it works)</button>
+    </div>
+
+    <div class="tabpane active" data-pane="howto">
+    <section id="what">
+      <h3><span class="n">1</span> What it does</h3>
+      <ul>
+        <li>Reads <strong>water temperature</strong> from a DS18B20 waterproof probe.</li>
+        <li>Reads <strong>air temperature + humidity</strong> from a DHT22.</li>
+        <li>Shows all three on a 1.3" SH1106 OLED, over a scrolling off-road truck animation.</li>
+        <li>Prints a status line to Serial every 2 s.</li>
+        <li>Sounds an <strong>active buzzer</strong> in three stages based on the water temperature.</li>
+      </ul>
+    </section>
+
+    <section id="bom">
+      <h3><span class="n">2</span> Hardware (bill of materials)</h3>
+      <table>
+        <tr><th>#</th><th>Part</th><th>Notes</th></tr>
+        <tr><td>1</td><td>Arduino UNO R4 WiFi</td><td>5 V logic</td></tr>
+        <tr><td>2</td><td>SH1106 OLED 1.3" 128×64, I2C</td><td>address <code>0x3C</code></td></tr>
+        <tr><td>3</td><td>DS18B20 waterproof probe</td><td>OneWire; needs a 4.7 kΩ pull-up</td></tr>
+        <tr><td>4</td><td>DHT22 (AM2302) breakout</td><td>temp + humidity; has its own pull-up</td></tr>
+        <tr><td>5</td><td>Active buzzer</td><td>fixed tone, on/off only</td></tr>
+        <tr><td>6</td><td>4.7 kΩ resistor</td><td>DS18B20 data pull-up to 5 V</td></tr>
+        <tr><td>7</td><td>Breadboard + jumper wires</td><td></td></tr>
+      </table>
+      <div class="warnbox"><strong>Active buzzer</strong> (confirmed by test): it makes a tone from plain
+      <code>digitalWrite(HIGH)</code>. It has one fixed pitch — loudness cannot be changed in code.
+      So "alarm" vs "warn" is <strong>steady vs pulsing</strong>, not louder vs softer.</div>
+    </section>
+
+    <section id="pins">
+      <h3><span class="n">3</span> Pin map</h3>
+      <table>
+        <tr><th>Part</th><th>Pin on part</th><th>UNO R4 pin</th></tr>
+        <tr><td>OLED</td><td>SDA</td><td>A4</td></tr>
+        <tr><td>OLED</td><td>SCL</td><td>A5</td></tr>
+        <tr><td>OLED</td><td>VCC / GND</td><td>5V / GND</td></tr>
+        <tr><td>DS18B20 (water)</td><td>Red (VCC)</td><td>5V</td></tr>
+        <tr><td>DS18B20 (water)</td><td>Black (GND)</td><td>GND</td></tr>
+        <tr><td>DS18B20 (water)</td><td>Yellow (DATA)</td><td><strong>D2</strong></td></tr>
+        <tr><td>DS18B20 (water)</td><td>4.7 kΩ resistor</td><td>between DATA and 5V</td></tr>
+        <tr><td>DHT22 (air)</td><td>VCC / +</td><td>5V</td></tr>
+        <tr><td>DHT22 (air)</td><td>DATA / OUT</td><td><strong>D4</strong></td></tr>
+        <tr><td>DHT22 (air)</td><td>GND / −</td><td>GND</td></tr>
+        <tr><td>Buzzer</td><td>+</td><td><strong>D3</strong></td></tr>
+        <tr><td>Buzzer</td><td>−</td><td>GND</td></tr>
+      </table>
+    </section>
+
+    <section id="circuit">
+      <h3><span class="n">4</span> Circuit diagram</h3>
+      <p>Hover a wire to highlight it. <code>[4.7k]</code> is the DS18B20 pull-up. Every VCC is 5 V, every GND common.</p>
+      <div class="diagram">
+        <svg viewBox="0 0 760 420" width="100%" role="img" aria-label="Circuit diagram">
+          <!-- board -->
+          <rect x="300" y="120" width="170" height="200" rx="10" class="comp" fill="#1b2330"/>
+          <text x="385" y="112" text-anchor="middle" class="lbl" fill="#4ea1ff">UNO R4 WiFi</text>
+          <!-- board pins (left) -->
+          <g class="lbl">
+            <rect x="286" y="140" width="28" height="16" class="pin"/><text x="300" y="152" text-anchor="middle">A4</text>
+            <rect x="286" y="162" width="28" height="16" class="pin"/><text x="300" y="174" text-anchor="middle">A5</text>
+            <rect x="286" y="200" width="28" height="16" class="pin"/><text x="300" y="212" text-anchor="middle">D2</text>
+            <rect x="286" y="240" width="28" height="16" class="pin"/><text x="300" y="252" text-anchor="middle">D3</text>
+            <rect x="286" y="280" width="28" height="16" class="pin"/><text x="300" y="292" text-anchor="middle">D4</text>
+          </g>
+          <!-- board pins (right) -->
+          <g class="lbl">
+            <rect x="456" y="150" width="30" height="16" class="pin"/><text x="471" y="162" text-anchor="middle">5V</text>
+            <rect x="456" y="290" width="30" height="16" class="pin"/><text x="471" y="302" text-anchor="middle">GND</text>
+          </g>
+
+          <!-- rails -->
+          <line class="wire" x1="486" y1="158" x2="700" y2="158" stroke="#ff5252" stroke-width="3"/>
+          <text x="706" y="162" class="lbl" fill="#ff5252">5V</text>
+          <line class="wire" x1="486" y1="298" x2="700" y2="298" stroke="#2ecc71" stroke-width="3"/>
+          <text x="700" y="302" class="lbl" fill="#2ecc71">GND</text>
+
+          <!-- OLED -->
+          <rect x="60" y="120" width="120" height="54" rx="8" class="comp"/>
+          <text x="120" y="112" text-anchor="middle" class="lbl" fill="#ff7a2f">OLED SH1106</text>
+          <line class="wire" x1="180" y1="140" x2="286" y2="148" stroke="#4ea1ff" stroke-width="3"/>
+          <text x="196" y="136" class="lbl">SDA→A4</text>
+          <line class="wire" x1="180" y1="158" x2="286" y2="170" stroke="#4ea1ff" stroke-width="3"/>
+          <text x="196" y="190" class="lbl">SCL→A5</text>
+
+          <!-- DS18B20 water -->
+          <rect x="60" y="195" width="120" height="40" rx="8" class="comp"/>
+          <text x="120" y="190" text-anchor="middle" class="lbl" fill="#ff7a2f">DS18B20 water</text>
+          <line class="wire" x1="180" y1="208" x2="286" y2="208" stroke="#f5c04e" stroke-width="3"/>
+          <text x="210" y="222" class="lbl">DATA→D2</text>
+          <!-- pull-up -->
+          <line class="wire" x1="233" y1="208" x2="233" y2="158" stroke="#ff5252" stroke-width="2" stroke-dasharray="4 3"/>
+          <rect x="222" y="172" width="22" height="14" fill="#2a2f3a" stroke="#f5c04e"/>
+          <text x="233" y="183" text-anchor="middle" class="lbl" font-size="9">4.7k</text>
+
+          <!-- buzzer -->
+          <rect x="60" y="248" width="120" height="40" rx="8" class="comp"/>
+          <text x="120" y="243" text-anchor="middle" class="lbl" fill="#ff7a2f">Buzzer (active)</text>
+          <line class="wire" x1="180" y1="262" x2="286" y2="248" stroke="#ff7a2f" stroke-width="3"/>
+          <text x="210" y="276" class="lbl">+ →D3</text>
+
+          <!-- DHT22 -->
+          <rect x="60" y="300" width="120" height="40" rx="8" class="comp"/>
+          <text x="120" y="356" text-anchor="middle" class="lbl" fill="#ff7a2f">DHT22 air</text>
+          <line class="wire" x1="180" y1="314" x2="286" y2="288" stroke="#9b59ff" stroke-width="3"/>
+          <text x="208" y="330" class="lbl">DATA→D4</text>
+
+          <!-- power taps to rails -->
+          <line class="wire" x1="120" y1="174" x2="120" y2="388" stroke="#2ecc71" stroke-width="2"/>
+          <line class="wire" x1="120" y1="388" x2="700" y2="388" stroke="#2ecc71" stroke-width="2"/>
+          <text x="360" y="402" class="lbl" fill="#2ecc71">common GND: OLED, DS18B20, DHT22, buzzer(−)</text>
+          <line class="wire" x1="150" y1="120" x2="150" y2="104" stroke="#ff5252" stroke-width="2"/>
+          <line class="wire" x1="150" y1="104" x2="700" y2="104" stroke="#ff5252" stroke-width="2"/>
+          <text x="360" y="100" class="lbl" fill="#ff5252">5V: OLED, DS18B20, DHT22, 4.7k pull-up</text>
+        </svg>
+        <div class="legend">
+          <span><i class="lk" style="background:#4ea1ff"></i> I2C (SDA/SCL)</span>
+          <span><i class="lk" style="background:#f5c04e"></i> OneWire data</span>
+          <span><i class="lk" style="background:#9b59ff"></i> DHT single-wire</span>
+          <span><i class="lk" style="background:#ff7a2f"></i> buzzer</span>
+          <span><i class="lk" style="background:#ff5252"></i> 5V</span>
+          <span><i class="lk" style="background:#2ecc71"></i> GND</span>
+        </div>
+      </div>
+      <h4>Signal summary</h4>
+      <table>
+        <tr><th>Pin</th><th>Direction</th><th>Connected to</th></tr>
+        <tr><td><code>D2</code></td><td>in</td><td>DS18B20 water probe (OneWire, 4.7k pull-up to 5V)</td></tr>
+        <tr><td><code>D3</code></td><td>out</td><td>active buzzer (+)</td></tr>
+        <tr><td><code>D4</code></td><td>in</td><td>DHT22 air temp + humidity (single-wire)</td></tr>
+        <tr><td><code>A4</code></td><td>I2C</td><td>OLED SDA (data)</td></tr>
+        <tr><td><code>A5</code></td><td>I2C</td><td>OLED SCL (clock)</td></tr>
+        <tr><td><code>5V</code></td><td>power</td><td>OLED, DS18B20, DHT22, 4.7k pull-up</td></tr>
+        <tr><td><code>GND</code></td><td>power</td><td>OLED, DS18B20, DHT22, buzzer (−)</td></tr>
+      </table>
+      <h4>Breadboard wiring view</h4>
+      <p>The same circuit as it sits on a breadboard — components, jumper wires and the 4.7 kΩ pull-up in place.</p>
+      <div class="diagram"><img src="breadboard.svg" alt="Breadboard wiring diagram" style="width:100%;display:block"></div>
+    </section>
+    </div><!-- /howto pane part 1 -->
+
+    <div class="tabpane" data-pane="explainer">
+    <section id="sensors">
+      <h3><span class="n" style="width:auto;padding:0 7px">4b</span> How the temperature sensors work</h3>
+      <p>From the analog physics inside the chip to the <code>°C</code>/<code>°F</code> your code prints.
+      The full chain:</p>
+      <div class="codeblock"><pre>physical heat → analog voltage inside the chip → ADC → digital number
+→ 1-wire protocol on the pin → Arduino library decodes → your °C/°F math</pre></div>
+      <div class="note"><strong>Both your sensors are digital on the wire.</strong> The DS18B20 and DHT22
+      each do the analog measurement <em>and</em> the analog-to-digital conversion inside their own
+      silicon, then send a ready-made number over one data pin. "Analog viewpoint" here means what
+      happens <em>inside the chip</em> — that is where the sensing physics lives. Section 5 (LM35 /
+      thermistor) shows the classic case where the Arduino's own ADC does the work.</div>
+
+      <h4>1 · The physics — heat becomes a voltage</h4>
+      <table>
+        <tr><th>Mechanism</th><th>Used by</th><th>What changes with temperature</th></tr>
+        <tr><td>Silicon bandgap</td><td>DS18B20, DHT22, LM35, TMP36</td><td>forward voltage of a diode/BJT junction</td></tr>
+        <tr><td>Thermistor (NTC)</td><td>cheap probes, 3D printers</td><td>resistance of a ceramic bead</td></tr>
+        <tr><td>Thermocouple</td><td>kilns, ovens</td><td>tiny voltage from two metals (Seebeck effect)</td></tr>
+      </table>
+      <p>The DS18B20 uses the <strong>silicon bandgap</strong> effect: a forward-biased junction's
+      voltage drops about <strong>−2 mV per °C</strong>. Running two junctions at different current
+      densities and subtracting gives a voltage <strong>proportional to absolute temperature</strong>
+      (the PTAT voltage). That PTAT voltage is the analog signal the chip measures.</p>
+      <div class="codeblock"><pre>V_junction
+   ^
+   |\
+   | \____           higher temp → lower junction voltage
+   |      \____       (about -2 mV per °C)
+   |           \____
+   +------------------> temperature</pre></div>
+
+      <h4>2 · Inside the DS18B20 — analog → digital, all on-chip</h4>
+      <div class="codeblock"><pre> [junction/PTAT]        analog voltage ∝ temperature
+        |
+ [analog front-end]     amplifies + references the PTAT voltage
+        |
+ [sigma-delta ADC]      converts the analog voltage to a digital count
+        |
+ [temperature register] signed 16-bit number, units of 1/16 °C
+        |
+ [1-Wire interface]     sends those bytes out on the single data pin</pre></div>
+      <p>The ADC resolution is configurable — exactly what your code sets:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>waterSensor.setResolution(10);   // line 159 of water_monitor.ino</pre></div>
+      <table>
+        <tr><th>Resolution</th><th>Step size</th><th>Conversion time</th><th>This project</th></tr>
+        <tr><td>9-bit</td><td>0.5 °C</td><td>~94 ms</td><td></td></tr>
+        <tr><td><strong>10-bit</strong></td><td><strong>0.25 °C</strong></td><td><strong>~188 ms</strong></td><td>← used here</td></tr>
+        <tr><td>11-bit</td><td>0.125 °C</td><td>~375 ms</td><td></td></tr>
+        <tr><td>12-bit</td><td>0.0625 °C</td><td>~750 ms</td><td></td></tr>
+      </table>
+      <p>The chip stores temperature as a <strong>signed 16-bit integer in units of 1/16 °C</strong>.
+      So raw <code>0x0191</code> = 401, and 401 ÷ 16 = <code>25.0625 °C</code>. The library does that
+      division, which is why you get a <code>float</code> back.</p>
+
+      <h4>3 · The 1-Wire protocol — how the number crosses the pin</h4>
+      <p>The DS18B20 uses Dallas <strong>1-Wire</strong>: one data line (<code>D2</code>) carries both
+      directions. The line idles HIGH, so it needs the <strong>4.7 kΩ pull-up</strong> to 5 V — both
+      ends talk by briefly pulling it LOW. No pull-up → the line floats → you see <code>W:--</code>.</p>
+      <p>A reading is a two-step dance, and the code reads <em>first</em>, then requests:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>if (millis() - lastWater > 500) {
+  float t = waterSensor.getTempCByIndex(0);  // read result of the LAST request
+  ...
+  waterSensor.requestTemperatures();         // kick off the NEXT conversion
+  lastWater = millis();
+}</pre></div>
+      <p>This is deliberately <strong>non-blocking</strong>: the conversion started 500 ms ago is
+      already finished, so the read is instant; then a fresh conversion starts for next time. The 500 ms
+      interval comfortably exceeds the 188 ms conversion, so the value is always ready — the animation
+      never freezes.</p>
+      <p>A disconnected probe returns <code>DEVICE_DISCONNECTED_C</code> (−127 °C):</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>if (t != DEVICE_DISCONNECTED_C) { waterOK = true; }
+else waterOK = false;   // missing probe → W:-- , never false-triggers the buzzer</pre></div>
+
+      <h4>4 · Inside the DHT22 — same idea, different packaging</h4>
+      <ul>
+        <li><strong>Humidity</strong>: a capacitor whose dielectric absorbs water vapour. More moisture → higher capacitance (analog), converted to %RH on-chip.</li>
+        <li><strong>Temperature</strong>: a bandgap element, same principle as section 1.</li>
+      </ul>
+      <p>One reading is <strong>40 bits</strong>: 16 humidity, 16 temperature, 8 checksum. Temperature is
+      a signed integer in <strong>units of 0.1 °C</strong> (raw <code>0x00E6</code> = 230 → 23.0 °C).
+      Your code just asks:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>float t = dht.readTemperature();   // line 202 — °C
+float h = dht.readHumidity();      // line 203 — %RH</pre></div>
+      <p>The DHT22 samples at only ~0.5 Hz, so it is read every <strong>2 s</strong>; faster polling
+      returns stale data or <code>NaN</code>, caught here:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>if (!isnan(t) && !isnan(h)) { airOK = true; }
+else airOK = false;</pre></div>
+
+      <h4>5 · The "true analog" case (for comparison): LM35</h4>
+      <p>Not used here, but this is what "analog temperature sensing" usually means — the Arduino's own
+      10-bit ADC does the conversion. An LM35 outputs <strong>10 mV per °C</strong>:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>int raw = analogRead(A0);              // 0..1023 (10-bit ADC)
+float volts = raw * (5.0 / 1023.0);    // ADC count → volts (5V reference)
+float celsius = volts * 100.0;         // 10 mV/°C → ×100</pre></div>
+      <p>Each ADC count ≈ 4.9 mV ≈ 0.49 °C of resolution. Moving the ADC <em>inside</em> the chip
+      (like the DS18B20) avoids noise pickup, wire resistance and rail wobble corrupting a long analog wire.</p>
+
+      <h4>6 · The °C → °F conversion</h4>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>waterF = t * 9.0 / 5.0 + 32.0;   // °F = °C × 9/5 + 32
+// 25 × 9 / 5 + 32 = 77.0 °F</pre></div>
+      <div class="warnbox">Write <code>9.0 / 5.0</code>, <strong>not</strong> <code>9 / 5</code>.
+      Integer division <code>9 / 5</code> equals <code>1</code> (remainder dropped), which breaks the
+      formula. The <code>.0</code> forces floating-point division (1.8). A classic C/C++ trap — the code gets it right.</div>
+
+      <h4>Quick reference</h4>
+      <table>
+        <tr><th></th><th>DS18B20 (water)</th><th>DHT22 (air)</th></tr>
+        <tr><td>Sensing element</td><td>silicon bandgap junction</td><td>bandgap temp + capacitive humidity</td></tr>
+        <tr><td>Where the ADC lives</td><td>inside the chip</td><td>inside the chip</td></tr>
+        <tr><td>On-wire format</td><td>1-Wire, signed, 1/16 °C</td><td>single-wire, 40 bits, 0.1 °C</td></tr>
+        <tr><td>Pull-up?</td><td>yes, 4.7 kΩ</td><td>breakout has its own</td></tr>
+        <tr><td>Resolution here</td><td>10-bit → 0.25 °C</td><td>0.1 °C</td></tr>
+        <tr><td>Max read rate</td><td>~5 Hz</td><td>~0.5 Hz (every 2 s)</td></tr>
+        <tr><td>Pin</td><td>D2</td><td>D4</td></tr>
+        <tr><td>Library call</td><td><code>getTempCByIndex(0)</code></td><td><code>readTemperature()</code> / <code>readHumidity()</code></td></tr>
+        <tr><td>Error sentinel</td><td><code>DEVICE_DISCONNECTED_C</code> (−127)</td><td><code>NaN</code></td></tr>
+      </table>
+      <p style="color:var(--muted);font-size:13px">Full text: <a href="../markdown/sensor-explainer.md">sensor-explainer.md</a></p>
+    </section>
+    </div><!-- /explainer pane -->
+
+    <div class="tabpane active" data-pane="howto">
+    <section id="buzzer">
+      <h3><span class="n">5</span> Buzzer logic (based on WATER temperature)</h3>
+      <p>Click a temperature zone to see what the buzzer, screen and Serial do:</p>
+      <div class="buzz">
+        <div class="zone cold" data-z="cold"><div class="rng">below 35 °C</div><div class="st">Silent</div></div>
+        <div class="zone warn" data-z="warn"><div class="rng">35 – 40 °C</div><div class="st">Beep</div></div>
+        <div class="zone hot" data-z="hot"><div class="rng">above 40 °C</div><div class="st">Loud</div></div>
+      </div>
+      <div class="buzzout" id="buzzout">
+        <div><span class="dot" id="bdot"></span><strong id="bstate">Pick a zone above</strong></div>
+        <div style="margin-top:8px; color:var(--muted)" id="bdetail">—</div>
+      </div>
+      <table style="margin-top:14px">
+        <tr><th>Water temp</th><th>Buzzer</th><th>Screen</th><th>Serial</th></tr>
+        <tr><td>below 35 °C</td><td>silent</td><td>(none)</td><td><code>OFF</code></td></tr>
+        <tr><td>35 to 40 °C</td><td>beep on/off every 400 ms</td><td>flashing <code>WARM</code></td><td><code>BEEP</code></td></tr>
+        <tr><td>above 40 °C</td><td>ON continuously</td><td>flashing <code>W HOT!</code></td><td><code>LOUD-CONT</code></td></tr>
+      </table>
+      <h4>Thresholds (top of the sketch)</h4>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>#define WARN_LIMIT 35.0     // beep from here
+#define ALARM_LIMIT 40.0    // loud continuous above here</pre></div>
+      <div class="warnbox">The buzzer is driven with <code>digitalWrite</code> <strong>only</strong> — never <code>tone()</code>.
+      Mixing <code>tone()</code> and <code>digitalWrite</code> on the same pin jams the pin (the <code>tone()</code> timer
+      stays attached), which was an earlier bug. One method for all states fixes it.</div>
+      <div class="note">A disconnected water probe reads as <code>OFF</code> and never false-triggers the alarm.</div>
+    </section>
+
+    <section id="display">
+      <h3><span class="n">6</span> Display layout</h3>
+      <div class="codeblock"><pre>  +--------------------------------------------+
+  | W:24.5'                        FriedRust   |   &lt;- water C, brand
+  | A:22.0'                                    |   &lt;- air C
+  | H:48%           [ WARM ]                   |   &lt;- humidity, warn box
+  |         /\        __                       |
+  |   ___/\/  \___   /LC78\___   /\/\          |   &lt;- truck on scrolling ground
+  |__/            \_/         \_/     \________|
+  +--------------------------------------------+</pre></div>
+      <ul>
+        <li><code>W:</code> water °C, <code>A:</code> air °C, <code>H:</code> humidity % — top-left.</li>
+        <li><code>FriedRust</code> brand — top-right.</li>
+        <li><code>WARM</code> / <code>W HOT!</code> box flashes only when the buzzer is active.</li>
+        <li>The truck hops when a boulder passes under it. Animation is non-blocking.</li>
+      </ul>
+    </section>
+
+    <section id="serial">
+      <h3><span class="n">7</span> Serial output (9600 baud)</h3>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>Water: 24.5C/76.1F   Air: 22.0C/71.6F  Hum:48%   Buzzer: OFF
+Water: 37.2C/99.0F   Air: 22.1C/71.8F  Hum:47%   Buzzer: BEEP
+Water: 92.3C/198.1F  Air: 22.1C/71.8F  Hum:47%   Buzzer: LOUD-CONT</pre></div>
+      <p>Printed once every 2 s (paced by the DHT22, which can only read that often).</p>
+    </section>
+
+    <section id="timing">
+      <h3><span class="n">8</span> Read timing</h3>
+      <table>
+        <tr><th>Sensor</th><th>Interval</th><th>Why</th></tr>
+        <tr><td>DS18B20 water</td><td>0.5 s</td><td>fast, non-blocking request/read</td></tr>
+        <tr><td>DHT22 air</td><td>2 s</td><td>DHT22 hardware limit (~0.5 Hz)</td></tr>
+        <tr><td>Display + buzzer</td><td>every loop (~40 ms)</td><td>smooth animation, responsive beep</td></tr>
+      </table>
+      <p>All reads are non-blocking (<code>millis()</code> timers), so the animation never stalls.</p>
+    </section>
+
+    <section id="libs">
+      <h3><span class="n">9</span> Libraries</h3>
+      <p>Install via <strong>Tools → Manage Libraries</strong>:</p>
+      <ol>
+        <li><strong>Adafruit SH110X</strong> (pulls in Adafruit GFX + Adafruit BusIO)</li>
+        <li><strong>Adafruit GFX Library</strong></li>
+        <li><strong>OneWire</strong> (Paul Stoffregen)</li>
+        <li><strong>DallasTemperature</strong> (Miles Burton)</li>
+        <li><strong>DHT sensor library</strong> (Adafruit) — say <strong>yes</strong> to Adafruit Unified Sensor</li>
+      </ol>
+      <div class="note">All of these are already vendored under <code>../../libraries/</code>.</div>
+    </section>
+
+    <section id="cli">
+      <h3><span class="n">9b</span> Build and upload from the command line (arduino-cli)</h3>
+      <h4>Install the board core (one-time)</h4>
+      <p>The UNO R4 WiFi uses the Renesas core. Install it once:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>arduino-cli core update-index
+arduino-cli core install arduino:renesas_uno</pre></div>
+      <p>Check it is there: <code>arduino-cli core list</code> should show <code>arduino:renesas_uno</code>.</p>
+
+      <h4>Find your board's port</h4>
+      <p>Plug the board in over USB, then:</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>arduino-cli board list</pre></div>
+      <p>Example output:</p>
+      <div class="codeblock"><pre>Port                            Protocol Type              Board Name           FQBN                             Core
+/dev/cu.usbmodemF412FA9C12345   serial   Serial Port (USB) Arduino UNO R4 WiFi  arduino:renesas_uno:unor4wifi    arduino:renesas_uno</pre></div>
+      <p>The <strong>Port</strong> column is what you pass to <code>-p</code> below. By platform:</p>
+      <table>
+        <tr><th>OS</th><th>Port looks like</th><th>Tips</th></tr>
+        <tr><td>macOS</td><td><code>/dev/cu.usbmodemXXXX</code></td><td>list with <code>ls /dev/cu.usbmodem*</code></td></tr>
+        <tr><td>Linux</td><td><code>/dev/ttyACM0</code> (or <code>ttyUSB0</code>)</td><td>may need <code>sudo usermod -aG dialout $USER</code>, then re-login</td></tr>
+        <tr><td>Windows</td><td><code>COM5</code></td><td>also in Device Manager → Ports (COM &amp; LPT)</td></tr>
+      </table>
+      <div class="note">If the board does not appear: try another USB cable (some are charge-only),
+      press the board's reset button, and re-run <code>arduino-cli board list</code>.</div>
+
+      <h4>Compile and upload</h4>
+      <p>Run these from the repo root. <code>--libraries ./libraries</code> uses the repo's vendored libraries,
+      so you do not have to install them by name.</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre># compile
+arduino-cli compile \
+  --fqbn arduino:renesas_uno:unor4wifi \
+  --libraries ./libraries \
+  sketches/water_monitor
+
+# find your board's port (Port column; e.g. /dev/cu.usbmodemXXXX)
+arduino-cli board list
+
+# upload (replace the port with the one from 'arduino-cli board list')
+arduino-cli upload \
+  --fqbn arduino:renesas_uno:unor4wifi \
+  --libraries ./libraries \
+  -p /dev/cu.usbmodemXXXX \
+  sketches/water_monitor</pre></div>
+      <p>Watch the Serial output from the CLI (9600 baud, matches the sketch):</p>
+      <div class="codeblock"><button class="copybtn">Copy</button><pre>arduino-cli monitor -p /dev/cu.usbmodemXXXX -c baudrate=9600</pre></div>
+    </section>
+
+    <section id="bringup">
+      <h3><span class="n">10</span> Bring-up (step by step)</h3>
+      <p>Click each step as you finish it — your progress shows in the sidebar and is saved in this browser.</p>
+      <ul class="steps" id="steps">
+        <li><div class="box"></div><div class="txt"><strong>Blink test</strong> — upload <code>sketches/blink_led/blink_led.ino</code>. The on-board LED path (D8) proves the toolchain and the board.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Find the OLED</strong> — upload <code>sketches/i2c_address_finder/i2c_address_finder.ino</code>, open Serial at 115200. It should report <code>0x3C</code>. If it reports something else, change <code>SCREEN_ADDRESS</code>.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Wire the sensors</strong> per the pin map above. Double-check the DS18B20 4.7 kΩ pull-up.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Upload</strong> <code>sketches/water_monitor/water_monitor.ino</code>. Open Serial at <strong>9600</strong>.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Verify</strong>: the OLED shows the truck + readouts; Serial prints the status line.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Test the buzzer</strong>: warm the water probe past 35 °C (beeps), then past 40 °C (steady).</div></li>
+      </ul>
+    </section>
+
+    <section id="trouble">
+      <h3><span class="n">11</span> Troubleshooting</h3>
+      <table>
+        <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+        <tr><td>Blank OLED</td><td>wrong I2C address or SDA/SCL swapped</td><td>run the I2C scanner; A4=SDA, A5=SCL</td></tr>
+        <tr><td><code>SH1106 allocation failed</code> on Serial</td><td>OLED not found on I2C</td><td>check 0x3C, wiring, 5V/GND</td></tr>
+        <tr><td>Water shows <code>W:--</code></td><td>probe unplugged or missing pull-up</td><td>add 4.7 kΩ DATA→5V, check D2</td></tr>
+        <tr><td>Air/Hum shows <code>--</code></td><td>DHT22 wiring or too-fast reads</td><td>check D4, VCC, GND; keep 2 s interval</td></tr>
+        <tr><td>Buzzer never sounds</td><td>wrong pin or buzzer polarity</td><td>buzzer + to D3, − to GND</td></tr>
+        <tr><td>Buzzer stuck / weird</td><td>mixing <code>tone()</code> with <code>digitalWrite</code></td><td>use <code>digitalWrite</code> only (active buzzer)</td></tr>
+        <tr><td>Values look wrong on first read</td><td>sensors still warming up</td><td>ignore the first second or two</td></tr>
+      </table>
+    </section>
+
+    <section id="tuning">
+      <h3><span class="n">12</span> Tuning</h3>
+      <ul>
+        <li><strong>Thresholds</strong>: edit <code>WARN_LIMIT</code> / <code>ALARM_LIMIT</code>.</li>
+        <li><strong>Beep speed</strong>: change <code>400</code> in the beep block (ms per on/off toggle).</li>
+        <li><strong>Animation speed</strong>: change the final <code>delay(40)</code> and <code>scroll += 2</code> in <code>loop()</code>.</li>
+        <li><strong>DS18B20 precision/speed</strong>: <code>waterSensor.setResolution(10)</code> — 9..12 bits.</li>
+      </ul>
+    </section>
+
+    </div><!-- /howto pane part 2 -->
+
+    <footer>LC78 OFFROAD · Water + Air Monitor · interactive docs mirror of README.md</footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  // tabs: switch How-to / Explainer
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panes = Array.prototype.slice.call(document.querySelectorAll('.tabpane'));
+  var navgroups = Array.prototype.slice.call(document.querySelectorAll('.navgroup'));
+  function setTab(name){
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab===name); });
+    panes.forEach(function(p){ p.classList.toggle('active', p.dataset.pane===name); });
+    navgroups.forEach(function(g){ g.classList.toggle('active', g.dataset.navtab===name); });
+    try{ localStorage.setItem('lc78-tab', name); }catch(e){}
+    window.scrollTo(0,0);
+    spy();
+  }
+  tabs.forEach(function(t){ t.addEventListener('click',function(){ setTab(t.dataset.tab); }); });
+  document.querySelectorAll('.navgroup[data-navtab="explainer"] a').forEach(function(a){
+    a.addEventListener('click',function(){ setTab('explainer'); });
+  });
+  document.querySelectorAll('.navgroup[data-navtab="howto"] a').forEach(function(a){
+    a.addEventListener('click',function(){ setTab('howto'); });
+  });
+
+  // copy buttons
+  document.querySelectorAll('.copybtn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var pre = btn.parentElement.querySelector('pre');
+      var txt = pre.innerText;
+      navigator.clipboard.writeText(txt).then(function(){
+        btn.textContent='Copied ✓'; btn.classList.add('done');
+        setTimeout(function(){btn.textContent='Copy'; btn.classList.remove('done');},1400);
+      });
+    });
+  });
+
+  // bring-up checklist with localStorage
+  var steps = Array.prototype.slice.call(document.querySelectorAll('#steps li'));
+  var KEY='lc78-bringup';
+  var saved={};
+  try{ saved = JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){}
+  function render(){
+    var done=0;
+    steps.forEach(function(li,i){
+      if(saved[i]){ li.classList.add('done'); done++; } else { li.classList.remove('done'); }
+    });
+    var pct = Math.round(done/steps.length*100);
+    document.getElementById('progbar').style.width = pct+'%';
+    document.getElementById('progtxt').textContent = done+' / '+steps.length+' steps';
+  }
+  steps.forEach(function(li,i){
+    li.addEventListener('click',function(){
+      saved[i]=!saved[i];
+      localStorage.setItem(KEY,JSON.stringify(saved));
+      render();
+    });
+  });
+  render();
+
+  // buzzer visualizer
+  var zones = Array.prototype.slice.call(document.querySelectorAll('.zone'));
+  var data = {
+    cold:{s:'Silent', c:'cold', on:false, d:'Below 35 °C — buzzer off. Serial logs OFF, screen shows no warning.'},
+    warn:{s:'Beeping (WARM)', c:'warn', on:true, d:'35–40 °C — beeps on/off every 400 ms. Screen flashes WARM. Serial logs BEEP.'},
+    hot:{s:'Loud continuous (W HOT!)', c:'hot', on:true, d:'Above 40 °C — buzzer ON continuously, never stops. Screen flashes W HOT!. Serial logs LOUD-CONT.'}
+  };
+  var dot=document.getElementById('bdot'), bstate=document.getElementById('bstate'), bdetail=document.getElementById('bdetail');
+  var pulse=null;
+  function showZone(z){
+    zones.forEach(function(el){ el.classList.toggle('active', el.dataset.z===z); });
+    var d=data[z];
+    dot.className='dot '+d.c+(d.on?' on':'');
+    bstate.textContent=d.s; bdetail.textContent=d.d;
+    if(pulse){clearInterval(pulse); pulse=null;}
+    if(z==='warn'){ // blink the dot to mimic beeping
+      var vis=true;
+      pulse=setInterval(function(){ vis=!vis; dot.style.opacity=vis?1:0.25; },400);
+    } else { dot.style.opacity=1; }
+  }
+  zones.forEach(function(el){ el.addEventListener('click',function(){ showZone(el.dataset.z); }); });
+
+  // scrollspy (only the active pane's sections / nav group)
+  function spy(){
+    var activePane = document.querySelector('.tabpane.active');
+    var activeNav = document.querySelector('.navgroup.active');
+    if(!activePane || !activeNav) return;
+    var links = Array.prototype.slice.call(activeNav.querySelectorAll('a[href^="#"]'));
+    var y = window.scrollY + 120, idx=0;
+    links.forEach(function(a,i){
+      var s = document.querySelector(a.getAttribute('href'));
+      if(s && s.offsetTop<=y) idx=i;
+    });
+    Array.prototype.slice.call(document.querySelectorAll('nav a')).forEach(function(a){ a.classList.remove('active'); });
+    if(links[idx]) links[idx].classList.add('active');
+  }
+  window.addEventListener('scroll', spy);
+
+  // restore saved tab (default howto)
+  var savedTab='howto';
+  try{ savedTab = localStorage.getItem('lc78-tab') || 'howto'; }catch(e){}
+  setTab(savedTab);
+})();
+</script>
+</body>
+</html>
