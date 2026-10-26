@@ -625,48 +625,63 @@ arduino-cli upload \
   var panes = Array.prototype.slice.call(document.querySelectorAll('.tabpane'));
   var navgroups = Array.prototype.slice.call(document.querySelectorAll('.navgroup'));
 
-  // map every section id -> the tab (pane) it lives in
-  var sectionTab = {};
-  panes.forEach(function(p){
-    p.querySelectorAll('section[id]').forEach(function(s){ sectionTab[s.id] = p.dataset.pane; });
-  });
+  // which pane does an element id live in? Works for ANY id (sections AND
+  // the explainer sub-headings), by walking up to the closest .tabpane.
+  function paneOf(id){
+    var el = document.getElementById(id);
+    if(!el) return null;
+    var p = el.closest ? el.closest('.tabpane') : null;
+    if(!p){ p = el; while(p && !(p.classList && p.classList.contains('tabpane'))) p = p.parentElement; }
+    return p ? p.getAttribute('data-pane') : null;
+  }
 
   function setTab(name){
     tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab===name); });
     panes.forEach(function(p){ p.classList.toggle('active', p.dataset.pane===name); });
     navgroups.forEach(function(g){ g.classList.toggle('active', g.dataset.navtab===name); });
     try{ localStorage.setItem('lc78-tab', name); }catch(e){}
-    spy();
   }
 
-  // navigate to a #hash: switch to that section's tab, then scroll to it
+  // scroll an element into view accounting for any sticky offset
+  function scrollToEl(el){
+    if(!el) return;
+    var top = el.getBoundingClientRect().top + window.pageYOffset - 16;
+    window.scrollTo({ top: top < 0 ? 0 : top, behavior: 'smooth' });
+  }
+
+  var suppressSpy = false;
+  // navigate to a #hash: switch to that id's tab, THEN (next frame) scroll to it
   function goTo(hash, push){
     var id = (hash||'').replace(/^#/,'');
     var target = id && document.getElementById(id);
-    if(target){
-      var tab = sectionTab[id] || 'howto';
-      setTab(tab);
-      // scroll after the pane is visible
-      target.scrollIntoView({behavior:'smooth', block:'start'});
-      if(push && ('#'+id)!==location.hash){ history.pushState(null,'','#'+id); }
-    } else {
-      // no/!unknown hash — just show the active/saved tab at the top
-      window.scrollTo(0,0);
-    }
-    spy();
+    if(!target){ window.scrollTo({top:0, behavior:'smooth'}); return; }
+    var tab = paneOf(id) || 'howto';
+    setTab(tab);
+    if(push && ('#'+id)!==location.hash){ history.pushState(null,'','#'+id); }
+    // the pane just became display:block — wait a frame so layout exists, then scroll
+    suppressSpy = true;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      scrollToEl(target);
+      setActiveLink(id);
+      setTimeout(function(){ suppressSpy = false; }, 500);
+    }); });
   }
 
-  // tab buttons clear the hash (go to that tab's top)
+  // highlight the matching nav link for an id
+  function setActiveLink(id){
+    Array.prototype.slice.call(document.querySelectorAll('nav a')).forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('href')==='#'+id);
+    });
+  }
+
+  // tab buttons jump to that tab's first topic
   tabs.forEach(function(t){
     t.addEventListener('click',function(){
-      setTab(t.dataset.tab);
-      history.pushState(null,'','#'+(t.dataset.tab==='explainer'?'sensors':'what'));
-      var first = document.getElementById(t.dataset.tab==='explainer'?'sensors':'what');
-      if(first) first.scrollIntoView({behavior:'smooth', block:'start'});
+      goTo('#'+(t.dataset.tab==='explainer'?'sensors':'what'), true);
     });
   });
 
-  // nav links drive the hash (let the browser set it, we handle hashchange)
+  // nav links: fully handled here (switch tab + scroll + hash)
   Array.prototype.slice.call(document.querySelectorAll('nav a[href^="#"]')).forEach(function(a){
     a.addEventListener('click',function(e){
       e.preventDefault();
@@ -734,28 +749,28 @@ arduino-cli upload \
   }
   zones.forEach(function(el){ el.addEventListener('click',function(){ showZone(el.dataset.z); }); });
 
-  // scrollspy (only the active pane's sections / nav group)
+  // scrollspy (only the active pane's nav group); viewport-relative so it works
+  // for nested headings too. Skips while a programmatic smooth-scroll is running.
   function spy(){
-    var activePane = document.querySelector('.tabpane.active');
+    if(suppressSpy) return;
     var activeNav = document.querySelector('.navgroup.active');
-    if(!activePane || !activeNav) return;
+    if(!activeNav) return;
     var links = Array.prototype.slice.call(activeNav.querySelectorAll('a[href^="#"]'));
-    var y = window.scrollY + 120, idx=0;
+    var idx = 0;
     links.forEach(function(a,i){
-      var s = document.querySelector(a.getAttribute('href'));
-      if(s && s.offsetTop<=y) idx=i;
+      var s = document.getElementById(a.getAttribute('href').slice(1));
+      if(s && s.getBoundingClientRect().top <= 130) idx = i;
     });
     Array.prototype.slice.call(document.querySelectorAll('nav a')).forEach(function(a){ a.classList.remove('active'); });
     if(links[idx]){
       links[idx].classList.add('active');
-      // keep the URL hash in sync with the section in view (no history spam)
       var h = links[idx].getAttribute('href');
       if(h && h.charAt(0)==='#' && document.getElementById(h.slice(1)) && location.hash!==h){
         history.replaceState(null,'',h);
       }
     }
   }
-  window.addEventListener('scroll', spy);
+  window.addEventListener('scroll', spy, {passive:true});
 
   // on load: a URL hash wins; else the saved tab; else How-to
   var initialHash = location.hash;
@@ -767,6 +782,19 @@ arduino-cli upload \
     setTab(savedTab);
     spy();
   }
+
+  // clicking a section heading or explainer sub-heading sets the URL hash
+  function wireHeading(el){
+    var sec = el.closest ? el.closest('section[id]') : null;
+    // prefer an explicit id on the heading, else the section's id
+    var id = el.id || (sec && sec.id);
+    if(!id) return;
+    el.style.cursor = 'pointer';
+    el.title = 'Link to this topic';
+    el.addEventListener('click', function(){ goTo('#'+id, true); });
+  }
+  Array.prototype.slice.call(document.querySelectorAll('section[id] > h3')).forEach(wireHeading);
+  Array.prototype.slice.call(document.querySelectorAll('h4[id]')).forEach(wireHeading);
 })();
 </script>
 </body>
