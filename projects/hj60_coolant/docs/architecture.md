@@ -23,7 +23,7 @@ flowchart TD
 | No valid sample since boot (< 5 s) | `WAIT` |
 | No valid sample for 5 s | `FAULT-NOFEED` (A) / `FAULT-NOEXCITE` (B) |
 | B: wire > 0.6 V with excitation off, in ≥ half the samples of 1 s | `FAULT-BACKFEED` |
-| k ≥ 0.998 (A) / k ≥ 0.985 (B) | `FAULT-OPEN` |
+| k ≥ 0.998 (A) / k ≥ 0.97 (B: an open wire gives 0.988) | `FAULT-OPEN` |
 | Rs < 5 Ω | `FAULT-SHORT` |
 | ≥ 105 °C (stays until < 103 °C) | `ALARM`, buzzer steady |
 | ≥ 100 °C (stays until < 98 °C) | `WARN`, buzzer toggles every 400 ms |
@@ -62,7 +62,8 @@ Faults sound a double chirp every 5 s.
 | `SENDER_R0/T0`, `SENDER_R1/T1` | 226 Ω @ 50 °C, 26 Ω @ 115 °C | FSM 13-74, calibrate (M4) |
 | `ADC_OFFSET_MV` | 0 | M5 with 47 Ω and 100 Ω in place of the sender |
 | `DIVIDER_RATIO` | 7.8 | A taps and battery: 68k/10k |
-| `VTOP_RATIO`, `VS_RATIO` | 1.47 | B: 47k/100k |
+| `VTOP_RATIO`, `VS_RATIO` | 17.6/12 = 1.467 | B: 5.6k/12k |
+| `VS_LOAD_OHMS` | 17600 | B: the Vs divider, removed from the sender reading |
 | `FEED_ON_V` | 3.0 V | A: below the on-level from M2 |
 | `SAMPLE_MS` / `MIN_PAIRS` | 10 ms / 5 | A: each 1 s window needs ≥ `MIN_PAIRS` on-samples |
 | `BACKFEED_V` | 0.6 V | B: above the ADC offset, below a real backfeed |

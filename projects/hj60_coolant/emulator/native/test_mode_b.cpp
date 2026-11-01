@@ -136,3 +136,13 @@ TEST(b_battery_voltage_logged) {
   runAt(90.0);
   CHECK_CONTAINS(lastLine(), "Batt:13.8V");
 }
+
+TEST(b_cold_engine_corrects_divider_load) {
+  // At 20 C the sender is ~850 ohm, so the 17.6k Vs divider in parallel
+  // matters (~1 C). The firmware removes it.
+  attachB();
+  setup();
+  runAt(20.0);
+  CHECK_NEAR(lastCoolant(), 20.0, 0.5);
+  CHECK_CONTAINS(lastLine(), "State:OK");
+}

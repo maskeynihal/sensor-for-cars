@@ -63,8 +63,10 @@ terminal F. Test on the bench with resistors first (table at the bottom). Never 
 Coloured tags with the same name are connected (net labels). Every GND is one common ground.</p>
 
 <h2>Wire list</h2>
-<p class="sub">Parts: 1 × 220 Ω, 2 × 47 kΩ, 2 × 100 kΩ (all 1% or better), 1 push button, 1 active buzzer (3.3 V,
-under 20 mA), the TFT, a car USB adapter and a USB cable. No diodes or transistors.</p>
+<p class="sub">Parts: 1 × 220 Ω, 2 × 5.6 kΩ, 2 × 12 kΩ, 1 push button, 1 active buzzer (3.3 V, under 20 mA), the TFT,
+a car USB adapter and a USB cable. No diodes or transistors. <b>Match the pairs:</b> measure your 5.6k and 12k
+resistors with the multimeter and use two 5.6k that read the same, and two 12k that read the same. The two dividers
+must be equal; the exact value matters less.</p>
 <table>
   <tr><th>#</th><th>From</th><th>To</th><th>Notes</th></tr>
   <tr><td colspan="4"><b>TFT</b></td></tr>
@@ -80,8 +82,8 @@ under 20 mA), the TFT, a car USB adapter and a USB cable. No diodes or transisto
   <tr><td colspan="4"><b>Temperature sender</b></td></tr>
   <tr><td>10</td><td>GPIO7</td><td>220 Ω → node VS</td><td>GPIO7 powers the sender only while it measures (about 2 ms in each 100 ms).</td></tr>
   <tr><td>11</td><td>Node VS</td><td>YG wire (unplugged from gauge terminal F)</td><td>Use a locking connector. Tape over the bare gauge F terminal.</td></tr>
-  <tr><td>12</td><td>GPIO7</td><td>47 kΩ → GPIO4 → 100 kΩ → GND</td><td>Measures the GPIO7 side of the 220 Ω.</td></tr>
-  <tr><td>13</td><td>Node VS</td><td>47 kΩ → GPIO5 → 100 kΩ → GND</td><td>Measures the sender side. Same values as wire 12.</td></tr>
+  <tr><td>12</td><td>GPIO7</td><td>5.6 kΩ → GPIO4 → 12 kΩ → GND</td><td>Measures the GPIO7 side of the 220 Ω.</td></tr>
+  <tr><td>13</td><td>Node VS</td><td>5.6 kΩ → GPIO5 → 12 kΩ → GND</td><td>Measures the sender side. Same values as wire 12. The firmware corrects for this divider being in parallel with the sender.</td></tr>
   <tr><td colspan="4"><b>Button and buzzer</b></td></tr>
   <tr><td>14</td><td>GPIO15</td><td>Push button → GND</td><td>Next screen. No resistor needed.</td></tr>
   <tr><td>15</td><td>GPIO17</td><td>Buzzer +</td><td>3.3 V active buzzer under 20 mA. Optional: leave it out if you have none.</td></tr>
@@ -165,19 +167,20 @@ better. Readings within a few °C are normal before the step M5 calibration (<co
   wire([[240, 80], [300, 80]]);
   net(300, 80, 'YG wire → sender', C.adc);
   txt(110, 68, 'VTOP', 'm', 'middle');
-  res(110, 80, 110, 160, 'R3 47k');
+  res(110, 80, 110, 160, 'R3 5.6k');
   dot(110, 170); wire([[110, 160], [110, 170]]);
-  res(110, 170, 110, 250, 'R4 100k'); gnd(110, 250);
+  res(110, 170, 110, 250, 'R4 12k'); gnd(110, 250);
   wire([[110, 170], [70, 170]], C.adc);
   net(70, 170, 'GPIO4', C.adc, 'end');
-  res(240, 80, 240, 160, 'R5 47k');
+  res(240, 80, 240, 160, 'R5 5.6k');
   dot(240, 170); wire([[240, 160], [240, 170]]);
-  res(240, 170, 240, 250, 'R6 100k'); gnd(240, 250);
+  res(240, 170, 240, 250, 'R6 12k'); gnd(240, 250);
   wire([[240, 170], [290, 170]], C.adc);
   net(290, 170, 'GPIO5', C.adc);
+  txt(330, 205, '3.2 V → 2.18 V at the pin', 's');
   txt(330, 220, 'optional: 10–100 nF', 's');
   txt(330, 235, 'GPIO4 → GND, GPIO5 → GND', 's');
-  txt(20, 280, 'R3 = R5 and R4 = R6 (1% or better). Sender body = engine ground.', 's');
+  txt(20, 280, 'R3 = R5 and R4 = R6: pick matching pairs with the meter. Sender body = engine ground.', 's');
   txt(20, 296, 'ESP32 GND to the engine block (see Power and ground).', 's');
 
   block(10, 320, 200, 120, 'Screen button');

@@ -21,8 +21,10 @@
 //       GPIO7 drives the sender directly: GPIO7 -> Rref 220 ohm -> YG
 //       wire -> sender -> engine ground (~13 mA, only while measuring).
 //       GPIO4 = Vtop (GPIO7 side of Rref), GPIO5 = Vs, each through a
-//       matched 47k/100k divider (keeps both pins below ~2.3 V, where the
-//       ADC is linear, so an open wire reads k = 1.0, not "cold").
+//       matched 5.6k/12k divider (keeps both pins below ~2.2 V, where the
+//       ADC is linear, so an open wire is not read as "cold"). The Vs
+//       divider (17.6k) is in parallel with the sender; the firmware
+//       removes it from the result (VS_LOAD_OHMS).
 //       No diodes or transistors. A short from the YG wire to 12 V can
 //       damage GPIO7: add a Schottky in series later if you can.
 //       Rs = Rref*Vs/(Vtop-Vs). Vs is also read with the excitation
@@ -74,8 +76,9 @@ DIYables_ILI9488_SPI tft(320, 480, TFT_CS, TFT_DC, TFT_RST);
 
 // ---- hardware constants (measure on the truck: report section 6) ----
 #define DIVIDER_RATIO  7.8      // A taps and battery: (68k + 10k) / 10k
-#define VTOP_RATIO     1.47     // B: Vtop through 47k/100k
-#define VS_RATIO       1.47     // B: Vs through 47k/100k (matched to Vtop)
+#define VTOP_RATIO     (17.6 / 12.0)  // B: Vtop through 5.6k/12k
+#define VS_RATIO       (17.6 / 12.0)  // B: Vs through 5.6k/12k (matched to Vtop)
+#define VS_LOAD_OHMS   17600.0  // B: the Vs divider, in parallel with the sender
 #define GAUGE_R_OHMS   25.0     // A: temp gauge E-F, FSM "STD 25 ohm" (M1)
 #define REF_R_OHMS     220.0    // B: Rref (1% or better)
 #define SENDER_R0      226.0    // ohm at SENDER_T0_C (FSM 13-74)
@@ -93,7 +96,7 @@ DIYables_ILI9488_SPI tft(320, 480, TFT_CS, TFT_DC, TFT_RST);
 #define FEED_ON_V       3.0     // A: feed at the tap must be above this
 #define EDGE_TOL        0.03    // A: feed may move <=3% across one pair
 #define K_OPEN_A        0.998   // A: Rs > ~12 kohm
-#define K_OPEN_B        0.985   // B: Rs > ~14 kohm
+#define K_OPEN_B        0.97    // B: open wire gives k = 17.6k/(17.6k+220) = 0.988
 #define RS_SHORT_OHMS   5.0
 #define EXCITE_MIN_V    2.0     // B: Vtop below this = excitation failed
 #define BACKFEED_V      0.6     // B: Vs with excitation off above this = fault (ADC floor ~0.15 V x1.47)
@@ -244,11 +247,15 @@ void evaluateWindow() {
     refV = refSum / kCount;
     float rRef = senderMode == SENDER_MODE_A ? GAUGE_R_OHMS : REF_R_OHMS;
     float kOpen = senderMode == SENDER_MODE_A ? K_OPEN_A : K_OPEN_B;
-    if (ratioK >= kOpen) {
+    float rp = ratioK < 1.0 ? rRef * ratioK / (1.0 - ratioK) : INFINITY;
+    // B: rp is the sender in parallel with the Vs divider. Remove the divider.
+    if (senderMode == SENDER_MODE_B && rp < VS_LOAD_OHMS) rp = rp * VS_LOAD_OHMS / (VS_LOAD_OHMS - rp);
+    else if (senderMode == SENDER_MODE_B) rp = INFINITY;
+    if (ratioK >= kOpen || isinf(rp)) {
       senderOhms = NAN; coolantC = NAN;
       setState(ST_OPEN);
     } else {
-      senderOhms = rRef * ratioK / (1.0 - ratioK);
+      senderOhms = rp;
       if (senderOhms < RS_SHORT_OHMS) {
         coolantC = NAN;
         setState(ST_SHORT);

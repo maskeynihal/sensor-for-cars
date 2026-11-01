@@ -2,13 +2,14 @@
 //
 // Real circuit: GPIO7 drives Rref 220 ohm -> sender (NTC, FSM 226 ohm @
 // 50 C, 26 ohm @ 115 C) -> ground. The ESP32 reads Vtop (GPIO4) and Vs
-// (GPIO5), each through a 47k/100k divider (1.47:1).
+// (GPIO5), each through a 5.6k/12k divider. The Vs divider (17.6k) is in
+// parallel with the sender.
 //
 // Wokwi cannot simulate that resistor network, and its potentiometers ignore
 // their VCC pin, so this chip computes the two voltages:
-//   EN high: VTOP = 3.2 V / 1.47, VS = 3.2 V * Rs / (Rs + 220) / 1.47
+//   EN high: VTOP = 3.2 V / DIV, VS = 3.2 V * Rp / (Rp + 220) / DIV, Rp = Rs || 17.6k
 //   EN low : VTOP = 0, VS = 0
-//   "open"     : Rs = infinite (VS = 3.2 V while EN is high)
+//   "open"     : Rs = infinite (only the 17.6k divider loads VS)
 //   "backfeed" : the wire is at least this voltage, EN high or low
 // See docs/adr/0011-hj60-wokwi-sender-chip.md.
 #include "wokwi-api.h"
@@ -17,7 +18,8 @@
 
 #define VTOP 3.2f
 #define RREF 220.0f
-#define DIV 1.47f
+#define DIV (17.6f / 12.0f)
+#define LOAD 17600.0f
 
 typedef struct {
   pin_t en, vtop, vs;
@@ -35,11 +37,13 @@ static void update(void *user_data) {
   int on = pin_read(chip->en);
   float vt = on ? VTOP : 0.0f;
   float vs;
-  if (attr_read_float(chip->open) > 0.5f) vs = vt;
+  float rp;
+  if (attr_read_float(chip->open) > 0.5f) rp = LOAD;
   else {
     float rs = sender_ohms(attr_read_float(chip->temperature));
-    vs = vt * rs / (rs + RREF);
+    rp = rs * LOAD / (rs + LOAD);
   }
+  vs = vt * rp / (rp + RREF);
   float back = attr_read_float(chip->backfeed);
   if (back > vs) vs = back;
   pin_dac_write(chip->vtop, vt / DIV);

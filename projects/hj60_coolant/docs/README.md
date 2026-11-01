@@ -23,8 +23,8 @@ Sender circuit, **mode B** (direct, default in the sketch). Resistors only, no d
 | Qty | Part | Notes |
 |---|---|---|
 | 1 | Rref 220 Ω, 1% or better | GPIO7 → Rref → YG wire. GPIO7 powers the sender while measuring (~13 mA, 2 ms in each 100 ms). |
-| 2 | 47 kΩ, 1% or better | Top of each divider |
-| 2 | 100 kΩ, 1% or better | Bottom of each divider. Vtop (GPIO7 side of Rref) → GPIO4, Vs → GPIO5 |
+| 2 | 5.6 kΩ (matched pair) | Top of each divider |
+| 2 | 12 kΩ (matched pair) | Bottom of each divider. Vtop (GPIO7 side of Rref) → GPIO4, Vs → GPIO5. The firmware removes the 17.6k Vs divider from the sender reading. |
 | 2 | 10–100 nF (optional) | GPIO4 and GPIO5 to GND |
 | (later) | Schottky diode 1N5819 in series with GPIO7, BAT54S clamps on GPIO4/5 | Protects GPIO7 if the YG wire touches 12 V. Recommended before you drive with it. |
 
@@ -57,9 +57,9 @@ Mode B (YG wire disconnected from the gauge):
 ```
  GPIO7 ──┬──[ Rref 220 Ω ]──┬── VS ── YG wire ── sender ── ⏚ engine block
          │                  │
-       47k                47k
+      5.6k               5.6k
          ├──► GPIO4         ├──► GPIO5
-       100k               100k
+       12k                12k
          │                  │
         GND                GND        ESP32 GND ── truck body ground
 ```
