@@ -17,7 +17,8 @@ make doctor              # check everything
 ## Wokwi token (only for `make sim`)
 
 1. Sign in at https://wokwi.com/dashboard/ci and create a CI token. It starts with `wok_`.
-2. Add `export WOKWI_CLI_TOKEN=wok_...` to `~/.zshrc` (never commit it).
+2. Put it in `.env` at the repo root: `WOKWI_CLI_TOKEN=wok_...`. `.env` is gitignored and is created from
+   `.env.example`. All `scripts/*.sh` load it. A token exported in your shell overrides it.
 3. Free tier: 50 simulated minutes per rolling 30 days, max 5 min per run.
 
 ## ESP32 / Pico cores (when a project needs them)

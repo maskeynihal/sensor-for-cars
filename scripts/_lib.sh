@@ -4,6 +4,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PATH="$HOME/bin:$HOME/.wokwi/bin:$PATH"
 
+# Load .env (gitignored secrets, e.g. WOKWI_CLI_TOKEN). Shell env wins.
+if [[ -f "$ROOT/.env" ]]; then
+  while IFS='=' read -r key val; do
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    val="${val%\"}"; val="${val#\"}"; val="${val%\'}"; val="${val#\'}"
+    [[ -z "${!key:-}" && -n "$val" ]] && export "$key=$val"
+  done < "$ROOT/.env"
+fi
+
 die() { echo "error: $*" >&2; exit 1; }
 info() { echo "==> $*"; }
 

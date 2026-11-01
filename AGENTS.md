@@ -119,7 +119,8 @@ Full guide: [docs/howto/new-project.md](docs/howto/new-project.md).
 ## Toolchain
 
 - `arduino-cli` (Homebrew). Cores: `arduino:renesas_uno`, `arduino:avr`. Add others on demand.
-- `wokwi-cli` in `~/bin` (needs `WOKWI_CLI_TOKEN`).
+- `wokwi-cli` in `~/bin`. It needs `WOKWI_CLI_TOKEN`, which the user keeps in the gitignored `.env` (template
+  `.env.example`), and scripts load it. Never print, commit, or ask for secrets in chat.
 - `clang++` (Xcode CLT) for native tests.
 - Check with `make doctor`.
 

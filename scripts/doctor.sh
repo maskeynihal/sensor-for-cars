@@ -23,7 +23,7 @@ if command -v arduino-cli >/dev/null; then
 fi
 
 info "wokwi token"
-if [[ -n "${WOKWI_CLI_TOKEN:-}" ]]; then echo "  ok    WOKWI_CLI_TOKEN set"; else echo "  MISS  WOKWI_CLI_TOKEN (only needed for make sim) -> https://wokwi.com/dashboard/ci"; fi
+if [[ -n "${WOKWI_CLI_TOKEN:-}" ]]; then echo "  ok    WOKWI_CLI_TOKEN set"; else echo "  MISS  WOKWI_CLI_TOKEN (only needed for make sim) -> https://wokwi.com/dashboard/ci, put it in .env"; fi
 
 if [[ "$install" == "--install" ]]; then
   command -v arduino-cli >/dev/null || brew install arduino-cli

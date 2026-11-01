@@ -9,7 +9,7 @@ load_project "${1:-}"
 arg="${2:-}"
 
 command -v wokwi-cli >/dev/null || die "wokwi-cli not installed (make doctor)"
-[[ -n "${WOKWI_CLI_TOKEN:-}" ]] || die "WOKWI_CLI_TOKEN not set. Get one at https://wokwi.com/dashboard/ci, then: export WOKWI_CLI_TOKEN=wok_..."
+[[ -n "${WOKWI_CLI_TOKEN:-}" ]] || die "WOKWI_CLI_TOKEN not set. Get one at https://wokwi.com/dashboard/ci and put it in .env (see .env.example)"
 
 "$ROOT/scripts/build.sh" "$NAME" sim
 mkdir -p "$BUILD/wokwi"
