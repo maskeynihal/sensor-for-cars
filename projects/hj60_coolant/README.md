@@ -20,7 +20,8 @@ Wokwi screenshots (ILI9341 320x240 stand-in, taken on the classic ESP32 before t
 | Emulator board | ESP32-S3 DevKitC-1 (`esp32:esp32:esp32s3`) |
 | Serial | 115200 baud |
 | Parts | ILI9488 3.5" SPI TFT, sender circuit for mode A or B on GPIO4/35 (+GPIO7 in B), battery divider (GPIO6), button (GPIO15), active buzzer via NPN (GPIO17). Pins: [docs/README.md](docs/README.md) |
-| Status | 39 native tests and the Wokwi mode B scenario pass. RPM and speed are DEMO values. Not on the truck yet: needs measurements M0–M6 ([report](docs/gauge-tap-report.md#6-plan)). **Don't trust WARN/ALARM until the M4 sender calibration** (two-point curve, ±10 °C near 100 °C) |
+| Power | USB (car USB adapter). ESP32 GND to the engine block. `batterySense = false` |
+| Status | 40 native tests and the Wokwi mode B scenario pass. RPM and speed are DEMO values. Not on the truck yet: needs measurements M0–M6 ([report](docs/gauge-tap-report.md#6-plan)). **Don't trust WARN/ALARM until the M4 sender calibration** (two-point curve, ±10 °C near 100 °C) |
 | Idea | [docs/ideas/2026-11-01-hj60-coolant.md](../../docs/ideas/2026-11-01-hj60-coolant.md) |
 
 ## Folders

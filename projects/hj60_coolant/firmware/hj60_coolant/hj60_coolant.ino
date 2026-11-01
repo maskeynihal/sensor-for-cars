@@ -8,7 +8,9 @@
 //            SCK=12 MOSI=11 CS=10 DC=9 RST=8 backlight=18
 //  Buzzer  : ACTIVE buzzer on GPIO17 via NPN transistor
 //  Button  : GPIO15 to ground (next screen)
-//  Battery : GPIO6 via 68k/10k (7.8:1)
+//  Power   : USB (car USB adapter). ESP32 GND shares the truck ground.
+//  Battery : optional, GPIO6 via 68k/10k (7.8:1) from 12 V. Set
+//            batterySense = true only when that divider is wired.
 //
 //  SENDER MODE (set senderMode below before you flash):
 //   A = passive taps, dash gauge keeps working (docs/adr/0008)
@@ -52,6 +54,8 @@
 // ---- sender mode: change before you flash ----
 enum SenderMode { SENDER_MODE_A, SENDER_MODE_B };
 SenderMode senderMode = SENDER_MODE_B;
+// ---- battery voltage on GPIO6: true only if the 68k/10k divider from 12 V is wired ----
+bool batterySense = false;
 
 // ---- pins ----
 // ESP32-S3: ADC1 is GPIO1-10. SPI uses the default FSPI pins SCK=12, MOSI=11.
@@ -406,6 +410,12 @@ const char *fmt1(Txt out, float v) {
   return out;
 }
 
+// Battery tile text: the voltage, or "USB" when there is no battery divider.
+const char *battText(Txt out) {
+  if (!batterySense) { strcpy(out, "USB"); return out; }
+  return fmt1(out, battV);
+}
+
 uint16_t waterColor() { return isAlert(state) || isFault(state) ? C_RED : C_ORANGE; }
 
 const char *waterLabel(const char *normal) {
@@ -448,7 +458,8 @@ void updateCheck(unsigned long inScreen) {
   if (inScreen >= CHECK_MS) {
     Txt b, line;
     const char *sender = isFault(state) ? stateName() : isnan(coolantC) ? "SENDER --" : "SENDER OK";
-    snprintf(line, sizeof(Txt), "%s  BATT %sV", sender, fmt1(b, battV));
+    if (batterySense) snprintf(line, sizeof(Txt), "%s  BATT %sV", sender, fmt1(b, battV));
+    else snprintf(line, sizeof(Txt), "%s  USB POWER", sender);
     value(0, 60, 282, 400, 18, 2, isFault(state) ? C_RED : C_CREAM, line);
   }
 }
@@ -485,7 +496,7 @@ void updateMain() {
   if (wNew) degreeC(20 + 36 * strlen(w) + 4, 214, 2, waterColor());
   bar(20, 282, 200, 16, 20, waterFrac(), waterColor());
   text(255, 180, 3, C_CREAM, "BATT");
-  value(5, 255, 214, 150, 48, 6, C_CREAM, fmt1(t, battV));
+  value(5, 255, 214, 150, 48, 6, C_CREAM, battText(t));
   bar(255, 282, 200, 16, 20, battFrac(), C_ORANGE);
 }
 
@@ -516,7 +527,7 @@ void updateGrid() {
   value(4, 20, 200, 150, 48, 6, waterColor(), w);
   if (wNew) degreeC(20 + 36 * strlen(w) + 4, 200, 2, waterColor());
   bar(20, 270, 200, 16, 20, waterFrac(), waterColor());
-  value(5, 255, 200, 170, 48, 6, C_CREAM, fmt1(t, battV));
+  value(5, 255, 200, 170, 48, 6, C_CREAM, battText(t));
   bar(255, 270, 200, 16, 20, battFrac(), C_ORANGE);
 }
 
@@ -547,7 +558,7 @@ void updateWater() {
   value(1, 320, 40, 150, 48, 6, C_CREAM, fmtInt(t, demoRpm));
   bar(320, 140, 140, 18, 14, demoRpm / 5000.0, C_ORANGE);
   value(2, 20, 250, 120, 48, 6, C_CREAM, fmtInt(t, demoSpd));
-  value(5, 258, 250, 140, 48, 6, C_CREAM, fmt1(t, battV));
+  value(5, 258, 250, 140, 48, 6, C_CREAM, battText(t));
 }
 
 void pollButton() {
@@ -646,7 +657,7 @@ void loop() {
   } else {
     serviceExcitationB();
   }
-  if (now - lastBatt >= 50) {
+  if (batterySense && now - lastBatt >= 50) {
     lastBatt = now;
     battSum += pinVolts(BATT_PIN, DIVIDER_RATIO);
     battCount++;

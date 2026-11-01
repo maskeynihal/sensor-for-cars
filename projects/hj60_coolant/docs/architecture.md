@@ -56,6 +56,7 @@ Faults sound a double chirp every 5 s.
 | Constant | Default | Source / step |
 |---|---|---|
 | `senderMode` | `SENDER_MODE_B` | Owner choice. A keeps the dash gauge working. |
+| `batterySense` | `false` | USB power: the BATT tile shows USB. `true` only with the GPIO6 divider wired. |
 | `GAUGE_R_OHMS` | 25.0 | A: FSM 13-74, measure (M1) |
 | `REF_R_OHMS` | 220.0 | B: Rref, 1% or better |
 | `SENDER_R0/T0`, `SENDER_R1/T1` | 226 Ω @ 50 °C, 26 Ω @ 115 °C | FSM 13-74, calibrate (M4) |

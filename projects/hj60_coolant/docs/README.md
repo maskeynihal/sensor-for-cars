@@ -13,8 +13,9 @@ Common parts:
 | 1 | ILI9488 3.5" 480x320 SPI TFT | 3.3 V logic. MISO not connected. Check the LED pin: if the module has no backlight transistor, drive it through an NPN or MOSFET (60–100 mA). |
 | 1 | Momentary push button | GPIO15 to ground. Internal pull-up. |
 | 1 | Active buzzer 5 V + NPN (2N2222 / S8050) + 1 kΩ base resistor + 1N4148 across the buzzer | Buzzer driver |
-| 1 | 68 kΩ + 10 kΩ (0.1%) + 100 nF + BAT54S | Battery voltage divider to GPIO6 |
-| 1 | 12 V → 5 V automotive front end | See [ADR 0009](../../../docs/adr/0009-hj60-12v-power-front-end.md): 1 A fuse, reverse protection, TVS (standoff ~26–28 V), buck rated ≥ 40 V in (60 V preferred) |
+| 1 | Car USB adapter (12 V socket, 2 A) + USB cable | Powers the ESP32 and the TFT through the board's UART USB port |
+| (optional) | 68 kΩ + 10 kΩ + 100 nF | Battery voltage divider to GPIO6. Only with `batterySense = true`. |
+| (optional) | 12 V → 5 V automotive front end | Only if you hard-wire to 12 V later. See [ADR 0009](../../../docs/adr/0009-hj60-12v-power-front-end.md). |
 | - | Locking connectors, soldered perfboard, strain relief | No breadboard or Dupont in the truck |
 
 Sender circuit, **mode B** (direct, default in the sketch). Resistors only, no diodes or transistors:
@@ -89,9 +90,17 @@ Rules:
 - Mode B: check the backfeed fault on the bench. Connect the YG wire to 12 V through a 1 kΩ resistor. The screen must
   show "WIRE HAS VOLTAGE".
 
-## Power
+## Power and ground
 
-12 V truck, one battery: 12.9 V engine off, 14.0 V running. Ignition switched, through the front end in ADR 0009.
+- **USB power** (owner's choice, 2026-11-01): a car USB adapter in the 12 V socket powers the ESP32 and the TFT
+  through the board's UART USB port. No 12 V wiring to the board.
+- **Ground:** connect ESP32 GND to the engine block near the sender (or the sender mount). The sender returns its
+  current through the engine block, so the circuit is not complete without this wire. A short wire to the block gives
+  the smallest error. The USB adapter's ground is usually the car ground too, and that is fine.
+- **Battery tile:** shows "USB" because `batterySense = false`. To show the battery voltage, wire the 68k/10k divider
+  from a fused 12 V point to GPIO6, set `batterySense = true`, and flash again.
+- The truck is 12 V, one battery: 12.9 V engine off, 14.0 V running. A cranking dip can reset the USB adapter. The
+  ESP32 then restarts in about a second.
 
 ## Sim vs real differences
 

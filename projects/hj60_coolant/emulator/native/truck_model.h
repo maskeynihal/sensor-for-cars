@@ -6,6 +6,7 @@
 float ohmsToC(float rs);  // from the sketch
 enum SenderMode { SENDER_MODE_A, SENDER_MODE_B };
 extern SenderMode senderMode;
+extern bool batterySense;
 
 const int FEED = 4, SENDER = 5, BUZZER = 17, EXCITE = 7, BATT = 6, BUTTON = 15;  // ESP32-S3 pins
 const double RG = 25.0, RATIO = 7.8, RREF = 220.0, BDIV = 1.47;
@@ -81,13 +82,16 @@ struct DirectTruck {
 inline Truck truck;
 inline DirectTruck direct;
 
+// The tests wire the battery divider unless a test turns it off.
 inline void attach() {
   senderMode = SENDER_MODE_A;
+  batterySense = true;
   sim::analogMvFn = [](uint8_t pin) { return truck.read(pin); };
 }
 
 inline void attachB() {
   senderMode = SENDER_MODE_B;
+  batterySense = true;
   sim::analogMvFn = [](uint8_t pin) { return direct.read(pin); };
 }
 

@@ -101,3 +101,16 @@ TEST(ui_values_redraw_only_on_change) {
   sim::runFor(3000);
   CHECK_EQ(tftmock::fullClears, clears);      // no full-screen redraw while nothing changes screens
 }
+
+TEST(ui_usb_power_without_battery_divider) {
+  attachB();
+  batterySense = false;
+  direct.rs = ohmsFor(90.0);
+  setup();
+  sim::runFor(4700);
+  CHECK_CONTAINS(scr(), "SENDER OK  USB POWER");
+  sim::runFor(1800);
+  CHECK_CONTAINS(scr(), "\nUSB\n");
+  CHECK_CONTAINS(lastLine(), "Batt:--");
+}
+
