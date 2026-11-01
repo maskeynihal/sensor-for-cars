@@ -402,6 +402,11 @@ This section examines two other options.
 
 ### 8.1 Option B: disconnect the gauge and measure the sender directly
 
+> **Built version (2026-11-01):** the owner has no diodes or transistors, so the firmware uses a resistor-only circuit.
+> GPIO7 drives Rref 220 Ω directly, and both voltages go through 47k/100k dividers. See
+> [README.md](README.md) and [html/wiring-diagram.html](html/wiring-diagram.html). The circuit below with the
+> transistor switch and the Schottky diode protects GPIO7 better. Use it if you can get the parts.
+
 **How it works:**
 
 1. Disconnect the YG wire from gauge terminal F.

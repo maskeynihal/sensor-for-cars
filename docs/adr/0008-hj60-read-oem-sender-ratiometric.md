@@ -53,3 +53,9 @@ The owner asked for option 5 (B) in code. The sketch now has `senderMode` (`SEND
 dividers (an undivided Vs near 3 V is compressed by the ADC, so an open wire read as "cold"), and checks the wire
 with the excitation off (`FAULT-BACKFEED`). This ADR stays Proposed until the truck measurements M1–M5.
 
+## Note (2026-11-01): resistor-only mode B
+
+The owner has no diodes or transistors. Mode B now uses GPIO7 → Rref 220 Ω → sender, with Vtop and Vs through matched
+47k/100k dividers. The firmware is unchanged except for the constants. The trade-off: a short from the YG wire to 12 V
+can damage GPIO7. A series Schottky diode on GPIO7 is recommended later.
+

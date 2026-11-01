@@ -57,11 +57,11 @@ Faults sound a double chirp every 5 s.
 |---|---|---|
 | `senderMode` | `SENDER_MODE_B` | Owner choice. A keeps the dash gauge working. |
 | `GAUGE_R_OHMS` | 25.0 | A: FSM 13-74, measure (M1) |
-| `REF_R_OHMS` | 100.0 | B: Rref, 0.1% |
+| `REF_R_OHMS` | 220.0 | B: Rref, 1% or better |
 | `SENDER_R0/T0`, `SENDER_R1/T1` | 226 Ω @ 50 °C, 26 Ω @ 115 °C | FSM 13-74, calibrate (M4) |
 | `ADC_OFFSET_MV` | 0 | M5 with 47 Ω and 100 Ω in place of the sender |
 | `DIVIDER_RATIO` | 7.8 | A taps and battery: 68k/10k |
-| `VTOP_RATIO`, `VS_RATIO` | 2.0 | B: 47k/47k |
+| `VTOP_RATIO`, `VS_RATIO` | 1.47 | B: 47k/100k |
 | `FEED_ON_V` | 3.0 V | A: below the on-level from M2 |
 | `SAMPLE_MS` / `MIN_PAIRS` | 10 ms / 5 | A: each 1 s window needs ≥ `MIN_PAIRS` on-samples |
 | `BACKFEED_V` | 0.6 V | B: above the ADC offset, below a real backfeed |
