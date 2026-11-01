@@ -17,15 +17,15 @@ Common parts:
 | 1 | 12 V → 5 V automotive front end | See [ADR 0009](../../../docs/adr/0009-hj60-12v-power-front-end.md): 1 A fuse, reverse protection, TVS (standoff ~26–28 V), buck rated ≥ 40 V in (60 V preferred) |
 | - | Locking connectors, soldered perfboard, strain relief | No breadboard or Dupont in the truck |
 
-Sender circuit, **mode B** (direct, default in the sketch):
+Sender circuit, **mode B** (direct, default in the sketch). Resistors only, no diodes or transistors:
 
 | Qty | Part | Notes |
 |---|---|---|
-| 1 | P-MOSFET (e.g. AO3401) + NPN (2N2222) + 10k / 1k resistors | GPIO7 HIGH switches 3.3 V on |
-| 1 | Schottky diode (e.g. BAT54 / 1N5817) | Stops a short to battery voltage from reaching 3.3 V |
-| 1 | Rref 100 Ω 0.1%, 0.25 W | Reference resistor |
-| 2 | 47 kΩ + 47 kΩ 0.1% + 10 nF | Matched dividers: Vtop → GPIO4, Vs → GPIO5 |
-| 2 | BAT54S | Clamps on the Vtop and Vs pins. If the YG wire touches 12 V, the Vtop node follows it through Rref, so GPIO4 needs a clamp too. |
+| 1 | Rref 220 Ω, 1% or better | GPIO7 → Rref → YG wire. GPIO7 powers the sender while measuring (~13 mA, 2 ms in each 100 ms). |
+| 2 | 47 kΩ, 1% or better | Top of each divider |
+| 2 | 100 kΩ, 1% or better | Bottom of each divider. Vtop (GPIO7 side of Rref) → GPIO4, Vs → GPIO5 |
+| 2 | 10–100 nF (optional) | GPIO4 and GPIO5 to GND |
+| (later) | Schottky diode 1N5819 in series with GPIO7, BAT54S clamps on GPIO4/5 | Protects GPIO7 if the YG wire touches 12 V. Recommended before you drive with it. |
 
 Sender circuit, **mode A** (passive taps):
 
@@ -43,7 +43,7 @@ Full schematic and wire list: [html/wiring-diagram.html](html/wiring-diagram.htm
 | TFT CS / DC / RST | 10 / 9 / 8 | |
 | TFT backlight | 18 | PWM |
 | Buzzer (via NPN) | 17 | |
-| Excitation switch (mode B) | 7 | HIGH = on, about 2 ms in each 100 ms |
+| Sender power (mode B) | 7 | Drives Rref directly. HIGH = on, about 2 ms in each 100 ms |
 | Battery (68k/10k) | 6 | ADC1 |
 | Mode A: gauge E / Mode B: Vtop | 4 | ADC1 |
 | Mode A: gauge F / Mode B: Vs | 5 | ADC1 |
@@ -54,9 +54,13 @@ Full schematic and wire list: [html/wiring-diagram.html](html/wiring-diagram.htm
 Mode B (YG wire disconnected from the gauge):
 
 ```
- 3V3 ─[P-MOSFET, GPIO7]─►|─ Vtop ─[Rref 100 Ω]─┬─ Vs ── YG wire ── sender ── ⏚ engine
-                       Schottky  │              │
-              47k/47k+10nF + BAT54S → GPIO4   47k/47k+10nF + BAT54S → GPIO5
+ GPIO7 ──┬──[ Rref 220 Ω ]──┬── VS ── YG wire ── sender ── ⏚ engine block
+         │                  │
+       47k                47k
+         ├──► GPIO4         ├──► GPIO5
+       100k               100k
+         │                  │
+        GND                GND        ESP32 GND ── truck body ground
 ```
 
 Mode A (dash gauge stays connected):

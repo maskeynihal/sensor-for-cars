@@ -16,10 +16,13 @@
 //       k = Vs/Vfeed = Rs/(Rs+Rg) while the regulator is on.
 //   B = direct: YG wire DISCONNECTED from the gauge, wired to the ESP32.
 //       THE DASH GAUGE DOES NOT WORK IN MODE B.
-//       GPIO7 switches 3.3 V -> Schottky -> Rref 100 ohm -> sender.
-//       GPIO4 = Vtop, GPIO5 = Vs, each via a matched 47k/47k + 10 nF.
-//       (Vs must be divided too: an open sender puts Vs = Vtop ~3 V,
-//       where the ESP32 ADC is compressed and an open reads as "cold".)
+//       GPIO7 drives the sender directly: GPIO7 -> Rref 220 ohm -> YG
+//       wire -> sender -> engine ground (~13 mA, only while measuring).
+//       GPIO4 = Vtop (GPIO7 side of Rref), GPIO5 = Vs, each through a
+//       matched 47k/100k divider (keeps both pins below ~2.3 V, where the
+//       ADC is linear, so an open wire reads k = 1.0, not "cold").
+//       No diodes or transistors. A short from the YG wire to 12 V can
+//       damage GPIO7: add a Schottky in series later if you can.
 //       Rs = Rref*Vs/(Vtop-Vs). Vs is also read with the excitation
 //       off: voltage there means the gauge or a battery wire is still
 //       on the sender wire (FAULT-BACKFEED).
@@ -67,10 +70,10 @@ DIYables_ILI9488_SPI tft(320, 480, TFT_CS, TFT_DC, TFT_RST);
 
 // ---- hardware constants (measure on the truck: report section 6) ----
 #define DIVIDER_RATIO  7.8      // A taps and battery: (68k + 10k) / 10k
-#define VTOP_RATIO     2.0      // B: Vtop through 47k/47k
-#define VS_RATIO       2.0      // B: Vs through 47k/47k (matched to Vtop)
+#define VTOP_RATIO     1.47     // B: Vtop through 47k/100k
+#define VS_RATIO       1.47     // B: Vs through 47k/100k (matched to Vtop)
 #define GAUGE_R_OHMS   25.0     // A: temp gauge E-F, FSM "STD 25 ohm" (M1)
-#define REF_R_OHMS     100.0    // B: Rref (0.1%)
+#define REF_R_OHMS     220.0    // B: Rref (1% or better)
 #define SENDER_R0      226.0    // ohm at SENDER_T0_C (FSM 13-74)
 #define SENDER_T0_C    50.0
 #define SENDER_R1      26.0     // ohm at SENDER_T1_C (FSM 13-74)
@@ -86,10 +89,10 @@ DIYables_ILI9488_SPI tft(320, 480, TFT_CS, TFT_DC, TFT_RST);
 #define FEED_ON_V       3.0     // A: feed at the tap must be above this
 #define EDGE_TOL        0.03    // A: feed may move <=3% across one pair
 #define K_OPEN_A        0.998   // A: Rs > ~12 kohm
-#define K_OPEN_B        0.985   // B: Rs > ~6.6 kohm
+#define K_OPEN_B        0.985   // B: Rs > ~14 kohm
 #define RS_SHORT_OHMS   5.0
 #define EXCITE_MIN_V    2.0     // B: Vtop below this = excitation failed
-#define BACKFEED_V      0.6     // B: Vs with excitation off above this = fault (ADC floor ~0.15 V x2)
+#define BACKFEED_V      0.6     // B: Vs with excitation off above this = fault (ADC floor ~0.15 V x1.47)
 #define EXCITE_PERIOD_MS 100    // B: one measurement every 100 ms
 #define EXCITE_SETTLE_MS 2      // B: excitation on -> read
 #define SAMPLE_MS       10      // A: one pair every 10 ms

@@ -8,7 +8,7 @@ enum SenderMode { SENDER_MODE_A, SENDER_MODE_B };
 extern SenderMode senderMode;
 
 const int FEED = 4, SENDER = 5, BUZZER = 17, EXCITE = 7, BATT = 6, BUTTON = 15;  // ESP32-S3 pins
-const double RG = 25.0, RATIO = 7.8, RREF = 100.0;
+const double RG = 25.0, RATIO = 7.8, RREF = 220.0, BDIV = 1.47;
 
 // Sender resistance for a temperature, same Beta fit as the sketch
 // (226 ohm @ 50 C, 26 ohm @ 115 C).
@@ -47,13 +47,13 @@ struct Truck {
   }
 };
 
-// Mode B: the YG wire goes to the ESP32. GPIO26 switches 3.3 V through a
-// Schottky (Vtop ~3.0 V) and Rref 100 ohm into the sender. Vtop and Vs are
-// each read through a 47k/47k divider. backfeedV puts a voltage on the sender wire
+// Mode B: the YG wire goes to the ESP32. GPIO7 drives Rref 220 ohm into the
+// sender directly (Vtop ~3.2 V under load). Vtop and Vs are each read
+// through a 47k/100k divider (1.47:1). backfeedV puts a voltage on the sender wire
 // (gauge still connected, or a short to a battery wire), clamped at 3.3 V.
 struct DirectTruck {
   double rs = 54.5;
-  double vtop = 3.0;
+  double vtop = 3.2;
   bool exciteDead = false;
   double backfeedV = 0;      // volts on the wire from outside
   unsigned long backOnMs = 0, backPeriodMs = 0;  // 0 = constant backfeed
@@ -67,11 +67,11 @@ struct DirectTruck {
   }
   int read(uint8_t pin) {
     double vt = exciting() ? vtop : 0.0;
-    if (pin == FEED) return mvAt(vt, 2.0);
+    if (pin == FEED) return mvAt(vt, BDIV);
     if (pin == SENDER) {
       double v = std::isinf(rs) ? vt : vt * rs / (rs + RREF);
       v = std::max(v, std::min(3.3, outside()));
-      return mvAt(v, 2.0);
+      return mvAt(v, BDIV);
     }
     if (pin == BATT) return mv(batt);
     return 0;

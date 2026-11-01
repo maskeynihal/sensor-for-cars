@@ -13,7 +13,7 @@ TEST(b_reads_temperature) {
   setup();
   runAt(90.0);
   CHECK_NEAR(lastCoolant(), 90.0, 0.5);
-  CHECK_CONTAINS(lastLine(), "Vtop:3.00V");
+  CHECK_CONTAINS(lastLine(), "Vtop:3.20V");
   CHECK_CONTAINS(lastLine(), "Mode:B  State:OK");
   CHECK_EQ(sim::pinLevel[BUZZER], LOW);
 }

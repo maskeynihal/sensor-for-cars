@@ -1,22 +1,23 @@
 // SIM-ONLY Wokwi custom chip: the mode B measurement circuit of hj60_coolant.
 //
-// Real circuit: GPIO26 switches 3.3 V -> Schottky -> Rref 100 ohm -> sender
-// (NTC, FSM 226 ohm @ 50 C, 26 ohm @ 115 C) -> ground. The ESP32 reads Vtop
-// (GPIO34) and Vs (GPIO35), each through a 47k/47k divider.
+// Real circuit: GPIO7 drives Rref 220 ohm -> sender (NTC, FSM 226 ohm @
+// 50 C, 26 ohm @ 115 C) -> ground. The ESP32 reads Vtop (GPIO4) and Vs
+// (GPIO5), each through a 47k/100k divider (1.47:1).
 //
 // Wokwi cannot simulate that resistor network, and its potentiometers ignore
 // their VCC pin, so this chip computes the two voltages:
-//   EN high: VTOP = 3.0 V / 2, VS = 3.0 V * Rs / (Rs + 100) / 2
+//   EN high: VTOP = 3.2 V / 1.47, VS = 3.2 V * Rs / (Rs + 220) / 1.47
 //   EN low : VTOP = 0, VS = 0
-//   "open"     : Rs = infinite (VS = 3.0 V while EN is high)
+//   "open"     : Rs = infinite (VS = 3.2 V while EN is high)
 //   "backfeed" : the wire is at least this voltage, EN high or low
 // See docs/adr/0011-hj60-wokwi-sender-chip.md.
 #include "wokwi-api.h"
 #include <math.h>
 #include <stdlib.h>
 
-#define VTOP 3.0f
-#define RREF 100.0f
+#define VTOP 3.2f
+#define RREF 220.0f
+#define DIV 1.47f
 
 typedef struct {
   pin_t en, vtop, vs;
@@ -41,8 +42,8 @@ static void update(void *user_data) {
   }
   float back = attr_read_float(chip->backfeed);
   if (back > vs) vs = back;
-  pin_dac_write(chip->vtop, vt / 2.0f);
-  pin_dac_write(chip->vs, vs / 2.0f);
+  pin_dac_write(chip->vtop, vt / DIV);
+  pin_dac_write(chip->vs, vs / DIV);
 }
 
 static void on_en(void *user_data, pin_t pin, uint32_t value) { update(user_data); }
