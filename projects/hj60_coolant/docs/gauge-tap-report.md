@@ -260,7 +260,9 @@ about 1 second, in the `WAIT` state.
 
 ### 4.3 Outputs
 
-- 1.3" SH1106 OLED on I2C (GPIO21 SDA, GPIO22 SCL). The OLED shows only static text, with no animation (section 5).
+- ILI9488 3.5" SPI TFT (SCK 18, MOSI 23, CS 5, DC 16, RST 17, backlight 21). See
+  [ADR 0010](../../../docs/adr/0010-hj60-ili9488-tft-and-sim-shim.md) and [architecture.md](architecture.md). The
+  screens use large static numbers. Only the boot screens have pictures.
 - Active buzzer on GPIO25 **through an NPN transistor** (for example 2N2222 or S8050, with a 1 kΩ base resistor and a
   flyback diode). A 5 V active buzzer needs more current than an ESP32 pin can safely supply.
 
@@ -347,6 +349,14 @@ the engine overheats. Possible solutions (next steps, not built):
 - Done: 12.9 V with the engine off, 14.0 V with the engine running (one 12 V battery).
 - Still necessary: the minimum voltage during cranking. Use the min/max function of the multimeter.
 
+**M7. Mode B only: check the fuel gauge and cold starts.**
+
+1. With a known fuel level, write down the fuel gauge reading.
+2. Disconnect terminal F (mode B). Wait 5 minutes. Read the fuel gauge again. The regulator also supplies the fuel
+   gauge, and we do not know if its duty changes with the load. If the reading changed, tell us.
+3. On a cold morning (below about −10 °C), watch for FAULT-OPEN at start. `K_OPEN_B` (0.985) is about 6.6 kΩ, which is
+   about −15 °C. ADC noise can cause a false open fault near −10 °C. A false fault is loud, not silent, but report it.
+
 ### Phase 1: read the factory sender (built: `projects/hj60_coolant`, native tests + Wokwi)
 
 - The ESP32 measures the feed and the sender wire as pairs.
@@ -403,7 +413,7 @@ This section examines two other options.
 ```
  ESP32 3V3 ──[P-MOSFET switch, GPIO26]──►|── Vtop ──[ Rref 100 Ω 0.1% ]──┬── Vs ── YG wire ── sender ── ⏚ engine
                                      Schottky   │                        │
-                              47k/47k + 10 nF → GPIO34     47k/47k + 10 nF + clamp → GPIO35
+                    47k/47k + 10 nF + clamp → GPIO34     47k/47k + 10 nF + clamp → GPIO35
 ```
 
 The two dividers are the same (0.1% resistors), so their gain errors cancel in the ratio.
@@ -437,7 +447,8 @@ the divider:
 **Protection:** the YG wire is in the engine bay. It can touch a battery wire.
 
 - The Schottky diode stops current from a short to battery voltage before it reaches the 3.3 V supply.
-- The 47 kΩ divider resistor and a clamp diode protect GPIO35.
+- A 47 kΩ divider resistor and a clamp diode protect GPIO34 and GPIO35. GPIO34 needs its clamp too. If the YG wire
+  touches 12 V, the Vtop node follows it through Rref (100 Ω). Then GPIO34 gets about 6 V without a clamp.
 - **Backfeed check:** before each measurement, the firmware reads the sender wire with the excitation off. If the
   voltage is more than 0.6 V in half or more of the samples in one second, it shows FAULT-BACKFEED. This finds two
   problems: terminal F is still connected to the gauge (regulator pulses), or the wire touches a battery wire.

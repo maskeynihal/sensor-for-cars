@@ -8,7 +8,7 @@ test them on a Mac with emulators before anything is flashed to a real board.
 | Project | Board | What |
 |---|---|---|
 | [water_monitor](projects/water_monitor/) | Arduino UNO R4 WiFi | **LC78 OFFROAD**: DS18B20 water probe, DHT22 air, animated SH1106 OLED, buzzer alarm |
-| [hj60_coolant](projects/hj60_coolant/) | ESP32 DevKit V1 | HJ60 coolant temperature from the factory gauge sender (ratiometric tap), SH1106 OLED, buzzer |
+| [hj60_coolant](projects/hj60_coolant/) | ESP32 DevKit V1 | HJ60 coolant temperature from the factory sender (mode A taps or mode B direct), FriedRust 3.5" ILI9488 TFT dashboard, buzzer |
 | [_utilities](projects/_utilities/) | any | blink, I2C scanner |
 | [_archive](projects/_archive/) | | superseded sketches |
 

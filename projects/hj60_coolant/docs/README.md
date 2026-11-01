@@ -25,7 +25,7 @@ Sender circuit, **mode B** (direct, default in the sketch):
 | 1 | Schottky diode (e.g. BAT54 / 1N5817) | Stops a short to battery voltage from reaching 3.3 V |
 | 1 | Rref 100 Ω 0.1%, 0.25 W | Reference resistor |
 | 2 | 47 kΩ + 47 kΩ 0.1% + 10 nF | Matched dividers: Vtop → GPIO34, Vs → GPIO35 |
-| 1 | BAT54S | Clamp on the Vs pin |
+| 2 | BAT54S | Clamps on the Vtop and Vs pins. If the YG wire touches 12 V, the Vtop node follows it through Rref, so GPIO34 needs a clamp too. |
 
 Sender circuit, **mode A** (passive taps):
 
@@ -54,7 +54,7 @@ Mode B (YG wire disconnected from the gauge):
 ```
  3V3 ─[P-MOSFET, GPIO26]─►|─ Vtop ─[Rref 100 Ω]─┬─ Vs ── YG wire ── sender ── ⏚ engine
                        Schottky  │              │
-                     47k/47k+10nF → GPIO34   47k/47k+10nF + BAT54S → GPIO35
+              47k/47k+10nF + BAT54S → GPIO34   47k/47k+10nF + BAT54S → GPIO35
 ```
 
 Mode A (dash gauge stays connected):

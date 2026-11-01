@@ -463,8 +463,8 @@ void drawMainStatic() {
     text(20 + i * 62, 140, 2, C_CREAM, d);
   }
   text(400, 140, 2, C_CREAM, "x1000");
-  text(300, 14, 1, C_DIM, "DEMO");
-  text(420, 22, 1, C_DIM, "DEMO");
+  text(300, 14, 2, C_CREAM, "DEMO");
+  text(420, 22, 2, C_CREAM, "DEMO");
   text(410, 238, 3, C_CREAM, "v");
 }
 
@@ -492,8 +492,8 @@ void drawGridStatic() {
   tft.drawFastHLine(X(10), Y(160), X(470) - X(10), C_LINE);
   text(20, 16, 2, C_CREAM, "RPM");
   text(255, 16, 2, C_CREAM, "SPEED");
-  text(180, 16, 1, C_DIM, "DEMO");
-  text(420, 16, 1, C_DIM, "DEMO");
+  text(180, 16, 2, C_CREAM, "DEMO");
+  text(420, 16, 2, C_CREAM, "DEMO");
   text(255, 172, 2, C_CREAM, "BATTERY");
   text(400, 80, 2, C_CREAM, "km/h");
   text(440, 248, 2, C_CREAM, "v");
@@ -525,8 +525,8 @@ void drawWaterStatic() {
   text(350, 112, 2, C_CREAM, "RPM");
   text(20, 226, 2, C_CREAM, "SPEED");
   text(258, 226, 2, C_CREAM, "BATT");
-  text(420, 20, 1, C_DIM, "DEMO");
-  text(180, 226, 1, C_DIM, "DEMO");
+  text(420, 20, 2, C_CREAM, "DEMO");
+  text(180, 226, 2, C_CREAM, "DEMO");
   text(150, 286, 2, C_CREAM, "km/h");
   text(400, 286, 2, C_CREAM, "v");
 }
