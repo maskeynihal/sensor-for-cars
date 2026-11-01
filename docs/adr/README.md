@@ -13,3 +13,4 @@ Format: [0000-template.md](0000-template.md). New ADR: `/adr <title>` (Claude Co
 | [0007](0007-hj60-coolant-on-esp32-devkit.md) | hj60_coolant on ESP32 DevKit V1 | Accepted | hj60_coolant |
 | [0008](0008-hj60-read-oem-sender-ratiometric.md) | Read the OEM gauge sender ratiometrically | Proposed | hj60_coolant |
 | [0009](0009-hj60-12v-power-front-end.md) | 12 V automotive power front end | Proposed | hj60_coolant |
+| [0010](0010-hj60-ili9488-tft-and-sim-shim.md) | ILI9488 TFT, DIYables library, ILI9341 shim in Wokwi | Accepted | hj60_coolant |
