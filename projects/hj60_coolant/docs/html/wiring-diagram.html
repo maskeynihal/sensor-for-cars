@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>hj60_coolant wiring: ESP32-S3 DevKitC-1, mode B</title>
+<title>hj60_coolant wiring (as built): ESP32-S3, USB power, mode B</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>hj60_coolant wiring: ESP32-S3 DevKitC-1, sender mode B</h1>
+<h1>hj60_coolant wiring (as built): ESP32-S3, USB power, sender mode B</h1>
 <p class="sub">Firmware 2026-11-01 (<code>senderMode = SENDER_MODE_B</code>, <code>batterySense = false</code>, USB power). Pin numbers are GPIO numbers.
 Pin positions follow the Espressif DevKitC-1 left header (J1). <b>Clone boards can have a different order: always
 read the GPIO label printed next to the pin.</b></p>
@@ -53,7 +53,7 @@ Keep the wire well insulated, and add a Schottky diode (e.g. 1N5819) in series w
 terminal F. Test on the bench with resistors first (table at the bottom). Never connect 12 V to any GPIO or to the
 3V3 pin.</div>
 
-<div class="box"><svg id="sch" viewBox="0 0 1320 1030" role="img" aria-label="Wiring schematic"></svg></div>
+<div class="box"><svg id="sch" viewBox="0 0 1320 975" role="img" aria-label="Wiring schematic"></svg></div>
 <p class="sub"><span class="sw" style="background:var(--n-3v3)"></span>3.3 V
 <span class="sw" style="background:var(--n-5v)"></span>5 V
 <span class="sw" style="background:var(--n-gnd)"></span>GND
@@ -63,8 +63,11 @@ terminal F. Test on the bench with resistors first (table at the bottom). Never 
 Coloured tags with the same name are connected (net labels). Every GND is one common ground.</p>
 
 <h2>Wire list</h2>
+<p class="sub">Parts: 1 × 220 Ω, 2 × 47 kΩ, 2 × 100 kΩ (all 1% or better), 1 push button, 1 active buzzer (3.3 V,
+under 20 mA), the TFT, a car USB adapter and a USB cable. No diodes or transistors.</p>
 <table>
   <tr><th>#</th><th>From</th><th>To</th><th>Notes</th></tr>
+  <tr><td colspan="4"><b>TFT</b></td></tr>
   <tr><td>1</td><td>ESP32 3V3</td><td>TFT VCC</td><td>Check the module: many 3.5" ILI9488 boards accept 3.3–5 V on VCC.</td></tr>
   <tr><td>2</td><td>ESP32 GND</td><td>TFT GND</td><td></td></tr>
   <tr><td>3</td><td>GPIO10</td><td>TFT CS</td><td></td></tr>
@@ -74,22 +77,24 @@ Coloured tags with the same name are connected (net labels). Every GND is one co
   <tr><td>7</td><td>GPIO12</td><td>TFT SCK</td><td></td></tr>
   <tr><td>8</td><td>GPIO18</td><td>TFT LED</td><td>If the LED pin draws more than ~20 mA (no transistor on the module), connect LED to 3V3 instead.</td></tr>
   <tr><td>9</td><td>—</td><td>TFT SDO (MISO)</td><td>Not connected.</td></tr>
-  <tr><td>10</td><td>GPIO7</td><td>Rref 220 Ω → node VS</td><td>GPIO7 powers the sender only while measuring (about 2 ms in each 100 ms, up to ~15 mA).</td></tr>
-  <tr><td>11</td><td>VS</td><td>YG wire to the sender</td><td>Through a locking connector. The sender body is grounded at the engine.</td></tr>
-  <tr><td>12</td><td>GPIO7</td><td>47 kΩ → GPIO4 → 100 kΩ → GND</td><td>Measures the GPIO7 side of Rref (Vtop).</td></tr>
-  <tr><td>13</td><td>VS</td><td>47 kΩ → GPIO5 → 100 kΩ → GND</td><td>Measures the sender side (Vs). Use the same resistor values as wire 12, 1% or better.</td></tr>
-  <tr><td>14</td><td>GPIO4, GPIO5</td><td>10–100 nF to GND (optional)</td><td>Reduces noise. Leave out if you have no capacitors.</td></tr>
-  <tr><td>15</td><td>(optional) car 12 V, fused</td><td>R7 68 kΩ → GPIO6 → R8 10 kΩ → GND</td><td>Not needed with USB power. If you add it, set <code>batterySense = true</code> and flash again.</td></tr>
-  <tr><td>16</td><td>GPIO15</td><td>Push button → GND</td><td>Next screen. Internal pull-up, no resistor needed.</td></tr>
-  <tr><td>17</td><td>GPIO17</td><td>R9 1 kΩ → Q3 base</td><td>Q3 = NPN. Collector to buzzer −, emitter to GND.</td></tr>
-  <tr><td>18</td><td>5V</td><td>Buzzer +</td><td>D6 1N4148 across the buzzer, cathode to +5 V.</td></tr>
-  <tr><td>19</td><td>Car USB adapter (12 V socket)</td><td>ESP32 USB port (the UART one)</td><td>Powers the ESP32 and the TFT. Use a 2 A adapter and a short data-quality cable.</td></tr>
-  <tr><td>20</td><td>ESP32 GND</td><td>Engine block, near the sender</td><td>Needed: the sender returns through the engine block. A short wire to the block (or the sender mount) gives the smallest error. A body ground also works if the engine ground strap is good.</td></tr>
+  <tr><td colspan="4"><b>Temperature sender</b></td></tr>
+  <tr><td>10</td><td>GPIO7</td><td>220 Ω → node VS</td><td>GPIO7 powers the sender only while it measures (about 2 ms in each 100 ms).</td></tr>
+  <tr><td>11</td><td>Node VS</td><td>YG wire (unplugged from gauge terminal F)</td><td>Use a locking connector. Tape over the bare gauge F terminal.</td></tr>
+  <tr><td>12</td><td>GPIO7</td><td>47 kΩ → GPIO4 → 100 kΩ → GND</td><td>Measures the GPIO7 side of the 220 Ω.</td></tr>
+  <tr><td>13</td><td>Node VS</td><td>47 kΩ → GPIO5 → 100 kΩ → GND</td><td>Measures the sender side. Same values as wire 12.</td></tr>
+  <tr><td colspan="4"><b>Button and buzzer</b></td></tr>
+  <tr><td>14</td><td>GPIO15</td><td>Push button → GND</td><td>Next screen. No resistor needed.</td></tr>
+  <tr><td>15</td><td>GPIO17</td><td>Buzzer +</td><td>3.3 V active buzzer under 20 mA. Optional: leave it out if you have none.</td></tr>
+  <tr><td>16</td><td>Buzzer −</td><td>GND</td><td></td></tr>
+  <tr><td colspan="4"><b>Power and ground</b></td></tr>
+  <tr><td>17</td><td>Car USB adapter (12 V socket, 2 A)</td><td>ESP32 USB port (the UART one)</td><td>Powers the ESP32 and the TFT.</td></tr>
+  <tr><td>18</td><td>ESP32 GND</td><td>Engine block, near the sender</td><td><b>Required.</b> The sender returns through the engine block. Without this wire the screen shows SENDER OPEN.</td></tr>
 </table>
 
 <h2>Bench test without the truck</h2>
 <p class="sub">Power the board from USB. Connect a resistor between node VS (the YG wire end) and GND in place of the
-sender. The BATT tile shows USB, because <code>batterySense</code> is off.</p>
+sender, and join the ESP32 GND to the other end of the resistor. The BATT tile shows USB, because
+<code>batterySense</code> is off.</p>
 <table>
   <tr><th>Resistor in place of the sender</th><th>Expected reading</th><th>State</th></tr>
   <tr><td>150 Ω</td><td>~61 °C</td><td>OK (your engine-warm measurement)</td></tr>
@@ -173,47 +178,24 @@ better. Readings within a few °C are normal before the step M5 calibration (<co
   txt(330, 220, 'optional: 10–100 nF', 's');
   txt(330, 235, 'GPIO4 → GND, GPIO5 → GND', 's');
   txt(20, 280, 'R3 = R5 and R4 = R6 (1% or better). Sender body = engine ground.', 's');
-  txt(20, 296, 'ESP32 GND to the truck body. No other parts needed.', 's');
+  txt(20, 296, 'ESP32 GND to the engine block (see Power and ground).', 's');
 
-  block(10, 320, 470, 120, 'Battery voltage (optional, not used with USB power)');
-  net(20, 365, 'IGN 12V', C.v5);
-  wire([[88, 365], [110, 365]], C.v5);
-  res(110, 365, 210, 365, 'R7 68k');
-  dot(220, 365); wire([[210, 365], [220, 365]]);
-  res(220, 365, 220, 425, 'R8 10k'); gnd(220, 425);
-  wire([[220, 365], [270, 365]]); cap(270, 365, 'C3 100n');
-  wire([[270, 365], [340, 365]], C.adc);
-  net(340, 365, 'GPIO6', C.adc);
-  txt(340, 410, '12.9 V → 1.65 V at the pin', 's');
+  block(10, 320, 200, 120, 'Screen button');
+  net(20, 370, 'GPIO15', C.out);
+  wire([[88, 370], [110, 370]]);
+  dot(110, 370); dot(150, 370);
+  wire([[110, 370], [146, 356]]);
+  wire([[128, 348], [128, 340]]); wire([[118, 340], [138, 340]]);
+  wire([[150, 370], [180, 370], [180, 390]]); gnd(180, 390);
+  txt(20, 420, 'No resistor needed. Press = LOW.', 's');
 
-  // ================= Button =================
-  block(10, 450, 200, 110, 'Screen button');
-  net(20, 500, 'GPIO15', C.out);
-  wire([[88, 500], [110, 500]]);
-  dot(110, 500); dot(150, 500);
-  wire([[110, 500], [146, 486]]);
-  wire([[128, 478], [128, 470]]); wire([[118, 470], [138, 470]]);
-  wire([[150, 500], [180, 500], [180, 520]]); gnd(180, 520);
-  txt(20, 545, 'Internal pull-up. Press = LOW.', 's');
-
-  // ================= Buzzer =================
-  block(220, 450, 260, 215, 'Buzzer driver');
-  net(330, 480, '5V', C.v5);
-  wire([[350, 489], [350, 500]], C.v5);
-  box(320, 500, 60, 40, 'BZ1', 'active 5 V');
-  txt(316, 512, '+', 's', 'end'); txt(316, 536, '−', 's', 'end');
-  wire([[350, 540], [350, 565]]);
-  // flyback diode drawn as a note box
-  box(400, 500, 70, 40, 'D6', '1N4148');
-  wire([[380, 505], [400, 505]]); wire([[380, 535], [400, 535]]);
-  txt(435, 552, 'cathode to +', 's', 'middle');
-  box(320, 565, 60, 45, 'Q3', 'NPN');
-  txt(354, 561, 'C', 's'); txt(354, 622, 'E', 's');
-  wire([[350, 610], [350, 625]], C.gnd); gnd(350, 625);
-  net(230, 588, 'GPIO17', C.out);
-  res(284, 588, 320, 588, 'R9 1k');
-  txt(230, 640, 'No transistor? A 3.3 V active buzzer under 20 mA can go', 's');
-  txt(230, 655, 'straight from GPIO17 to GND. Or leave the buzzer out.', 's');
+  block(220, 320, 260, 120, 'Buzzer (optional)');
+  net(230, 375, 'GPIO17', C.out);
+  wire([[288, 375], [320, 375]], C.out);
+  box(320, 355, 80, 40, 'BZ1', 'active 3.3 V');
+  txt(316, 368, '+', 's', 'end');
+  wire([[400, 375], [430, 375], [430, 395]]); gnd(430, 395);
+  txt(230, 420, 'Under 20 mA. A 5 V buzzer needs a transistor.', 's');
 
   // ================= ESP32-S3 header J1 =================
   const J1 = ['3V3', '3V3', 'RST', '4', '5', '6', '7', '15', '16', '17', '18', '8', '3', '46', '9', '10', '11', '12', '13', '14', '5V', 'GND'];
@@ -223,10 +205,10 @@ better. Readings within a few °C are normal before the step M5 calibration (<co
   el('rect', { x: HX, y: HY - 12, width: 100, height: J1.length * HS, rx: 6, class: 'part' });
   const used = {
     '3V3': ['3V3 (TFT VCC)', C.v3], '4': ['GPIO4 ← VTOP divider', C.adc], '5': ['GPIO5 ← VS divider', C.adc],
-    '6': ['GPIO6 ← battery', C.adc], '7': ['GPIO7 → Rref (sender power)', C.out], '15': ['GPIO15 ← button', C.out],
-    '16': ['free (option C PWM)', null], '17': ['GPIO17 → Q3 (buzzer)', C.out], '18': ['TFT LED', C.spi], '8': ['TFT RESET', C.spi],
+    '6': ['free (battery, not used)', null], '7': ['GPIO7 → Rref (sender power)', C.out], '15': ['GPIO15 ← button', C.out],
+    '16': ['free (option C PWM)', null], '17': ['GPIO17 → buzzer +', C.out], '18': ['TFT LED', C.spi], '8': ['TFT RESET', C.spi],
     '9': ['TFT DC/RS', C.spi], '10': ['TFT CS', C.spi], '11': ['TFT SDI (MOSI)', C.spi], '12': ['TFT SCK', C.spi],
-    '5V': ['5V (from USB, buzzer +)', C.v5], 'GND': ['GND (common)', C.gnd]
+    '5V': ['5V (from USB)', C.v5], 'GND': ['GND (common)', C.gnd]
   };
   const pinY = {};
   J1.forEach((p, i) => {
@@ -261,15 +243,15 @@ better. Readings within a few °C are normal before the step M5 calibration (<co
   txt(1200, 272, 'wire it to 3V3', 's');
 
   // ================= Power =================
-  block(10, 775, 1300, 240, 'Power and ground (USB power)');
-  const py = 860;
+  block(10, 775, 1300, 190, 'Power and ground');
+  const py = 845;
   box(30, py - 30, 170, 60, 'Car USB adapter', 'in the 12 V socket, 2 A');
   wire([[200, py], [300, py]], C.v5);
   txt(250, py - 8, 'USB cable', 's', 'middle');
   box(300, py - 30, 220, 60, 'ESP32-S3 USB port', 'the UART one (/dev/cu.usbserial-*)');
   wire([[520, py], [600, py]], C.v5);
   net(600, py, '5V', C.v5);
-  txt(640, py + 4, '→ board 5V rail → TFT (via 3V3) and buzzer +', 's');
+  txt(640, py + 4, '→ board 5V rail and its 3.3 V regulator → ESP32 and TFT', 's');
   net(30, py + 85, 'GND', C.gnd);
   wire([[72, py + 85], [300, py + 85]], C.gnd);
   box(300, py + 60, 220, 50, 'Engine block', 'near the sender (or its mount)');
