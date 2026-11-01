@@ -50,6 +50,8 @@
    to operate correctly.
 7. The water_monitor prototype (UNO R4 + DS18B20) is not safe to install in this truck in its current form. See
    section 5.
+8. There are two other connection options. Option B disconnects the gauge, and the ESP32 measures the sender
+   directly. Option C also lets the ESP32 operate the gauge. See section 8.
 
 ## 2. The FSM data (HJ60 = "BJ, HJ Series")
 
@@ -382,3 +384,145 @@ the engine overheats. Possible solutions (next steps, not built):
 - Does the gauge show a normal value now? If the needle is at the center of the scale when the engine is warm, the
   sender is probably serviceable.
 - Where in the cab do we install the ESP32 and the OLED? Think about the glance angle, heat and sun.
+
+## 8. Other connection options (B and C)
+
+The design in sections 3 and 4 is **option A**. The sender stays connected to the gauge, and the ESP32 only listens.
+This section examines two other options.
+
+### 8.1 Option B: disconnect the gauge and measure the sender directly
+
+**How it works:**
+
+1. Disconnect the YG wire from gauge terminal F.
+2. Connect the YG wire to the ESP32 measurement circuit.
+3. The ESP32 supplies a small known current through a reference resistor (Rref) and the sender to ground.
+4. The ESP32 measures the voltage above Rref (Vtop) and the voltage at the sender (Vs).
+5. It calculates `Rs = Rref × Vs / (Vtop − Vs)`. This is the same equation as option A, with Rref in place of Rg.
+
+```
+ ESP32 3V3 ──[P-MOSFET switch, GPIO26]──►|── Vtop ──[ Rref 100 Ω 0.1% ]──┬── Vs ── YG wire ── sender ── ⏚ engine
+                                     Schottky   │                        │
+                                  10k/10k divider → GPIO34      10k series + clamp → GPIO35
+```
+
+**Numbers** (Rref = 100 Ω, 3.3 V excitation):
+
+| °C | Rs (Ω) | Vs (V) | Current (mA) |
+|---|---|---|---|
+| 20 | ~847 | 2.95 | 3.5 |
+| 50 | 226 | 2.29 | 10.1 |
+| 90 | ~55 | 1.16 | 21.4 |
+| 100 | ~40 | 0.94 | 23.6 |
+| 105 | ~35 | 0.85 | 24.5 |
+| 115 | 26 | 0.68 | 26.2 |
+
+- Sensitivity near 100 °C: about **19 mV for each °C**. Option A gives about 10.5 mV for each °C. Thus option B is
+  approximately two times more sensitive.
+- The excitation is steady. There are no regulator pulses, so the firmware does not need to ignore samples.
+- The sender gets about 20–25 mW. The coolant removes this heat, so the self-heating error is very small.
+- The ESP32 switches the excitation on only during a measurement (for example 10 ms in each 100 ms). This decreases
+  the power.
+- Vtop (3.3 V) is above the accurate ADC range, so a 10k/10k divider halves it before GPIO34. Step M5 calibrates the
+  divider ratio.
+- Above about 2.45 V (below about 40 °C), the ADC is less accurate. This is acceptable because cold readings do not
+  trigger alarms.
+
+**Protection:** the YG wire is in the engine bay. It can touch a battery wire.
+
+- The Schottky diode stops current from a short to battery voltage before it reaches the 3.3 V supply.
+- A 10 kΩ series resistor and a clamp diode protect GPIO35.
+- Measure the ground offset between the engine block and the ESP32 ground (step M3). In option B, the sender current
+  also flows through this ground path.
+
+**Effect on the truck:**
+
+- The dash gauge **stops working**. With F open, the needle stays below C.
+- If the ESP32 fails, the driver has **no coolant temperature at all**.
+- Thus, use option B only on the bench, or for the M4 calibration. Do not drive the truck with option B alone.
+
+### 8.2 Option C: measure the sender directly, then operate the gauge from the ESP32
+
+**Important: the gauge does not accept a voltage.** The gauge is a heater between the feed (E) and terminal F. The
+sender controls how much current goes from F to ground. To operate the gauge, the ESP32 must **sink a controlled
+current** from F to ground. It cannot do this with a voltage output. The ESP32 DAC supplies only a few mA. The gauge
+needs up to about 260 mA.
+
+**How it works:**
+
+1. The ESP32 measures the sender as in option B.
+2. It calculates the temperature.
+3. It operates a low-side MOSFET switch in series with a resistor Rmin (20 Ω) between F and ground.
+4. The MOSFET switches on and off quickly (PWM, about 1 kHz). The bimetal gauge is slow, so it uses the average heat,
+   as it does with the regulator pulses.
+5. The ESP32 sets the PWM duty so that the gauge gets the same average heat as it would get from the real sender:
+   `D = ((Rg + Rmin) / (Rg + Rs))²`.
+
+| °C | Rs (Ω) | PWM duty D |
+|---|---|---|
+| 20 | ~847 | 0.3% |
+| 50 | 226 | 3.2% |
+| 82 | ~71 | 22% |
+| 100 | ~40 | 48% |
+| 105 | ~35 | 57% |
+| 115 | 26 | 78% |
+| 120 | ~23 | 89% |
+
+**Parts for the gauge driver:**
+
+- Logic-level N-channel MOSFET, rated 30 V or more.
+- Rmin: 20 Ω, 5 W. The peak current is about 0.26–0.29 A. The peak power in Rmin is about 1.4–1.7 W.
+- TVS diode across the MOSFET, for spikes from the regulator contacts.
+- Rmin sets the hottest reading that the gauge can show. With 20 Ω, the maximum is near 125 °C.
+
+**Fail-safe relay (necessary for option C):**
+
+```
+                  relay OFF (no power, normal closed)      relay ON (ESP32 healthy)
+ gauge F ──────── sender  (factory circuit)                 MOSFET + Rmin  (ESP32 operates the gauge)
+ sender  ──────── gauge F                                   ESP32 measurement (option B circuit)
+```
+
+- Use an automotive changeover relay with two poles (DPDT), or two SPDT relays.
+- With no relay power, the normally closed contacts connect the sender to the gauge. This is the factory circuit.
+- The ESP32 energizes the relay only when it operates correctly. Use a hardware watchdog, so that a firmware crash
+  releases the relay.
+- If the ESP32 fails or has no power, the relay releases. Then the dash gauge operates as the factory designed it.
+- With the relay released, the ESP32 can use option A (the passive taps) to continue to measure. Thus options A and C
+  can share the same hardware.
+
+**Effect on the truck:**
+
+- The dash gauge continues to operate. It can be more accurate, because the ESP32 can correct the sender curve.
+- New risk: a firmware error can make the gauge show an incorrect temperature. Native tests and the relay fallback
+  decrease this risk.
+- Unknown: the regulator was designed for a steady resistive load. We did not check how it operates with a PWM load.
+  **Test this on the bench** (phase 2) before you install option C.
+
+### 8.3 Comparison
+
+| | A: passive taps (current design) | B: direct, gauge disconnected | C: direct + ESP32 operates gauge |
+|---|---|---|---|
+| Dash gauge | Operates (factory) | **Does not operate** | Operates (from the ESP32) |
+| If the ESP32 fails | Gauge operates | **No temperature at all** | Relay returns to the factory circuit. Gauge operates. |
+| Signal at the ADC near 100 °C | ~10.5 mV/°C, pulsed | ~19 mV/°C, steady | ~19 mV/°C, steady |
+| Firmware | Pair sampling, gating, median | Simple ratio | Ratio, PWM output, relay watchdog |
+| Extra parts | 2 dividers | Rref, MOSFET switch, diode | Option B parts, MOSFET, Rmin, relay, watchdog |
+| Changes to truck wiring | Two taps, no cut | Disconnect F | Relay in the YG wire |
+| Can you go back to factory? | Remove the taps | Connect F again | Remove the relay |
+| Main risk | Rg and the ADC offset limit accuracy | Driver has no gauge | PWM load on the regulator is not tested |
+
+### 8.4 Recommendation
+
+1. Keep **option A** for the first installation. It does not change the factory circuit.
+2. Use **option B** only on the bench and for the M4 sender calibration.
+3. If option A is not accurate enough after steps M4 and M5, build **option C**, with the fail-safe relay. Do the
+   bench test of the regulator with a PWM load first.
+4. Do not install option B alone in a truck that you drive.
+
+Questions for options B and C:
+
+- Does the regulator operate correctly with a PWM load (bench test)?
+- Is there space for a relay near the cluster, or is the engine bay side better?
+- Do you want the ESP32 to correct the dash gauge, or only to copy the sender value?
+

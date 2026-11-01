@@ -353,7 +353,80 @@ where you connected the meter). The two voltages switch on and off at the same t
   </div>
 </div>
 
-<h2>6. Words in this page</h2>
+<h2>6. Other ways to connect (options A, B and C)</h2>
+<p class="sub">Option A is the current design. Options B and C disconnect the sender from the gauge. Use the
+temperature slider in section 2. Click "ESP32 fails" to see what the driver gets.</p>
+<div class="controls" role="group" aria-label="Connection option">
+  <button id="oA" aria-pressed="true">A: passive taps</button>
+  <button id="oB" aria-pressed="false">B: direct, gauge disconnected</button>
+  <button id="oC" aria-pressed="false">C: direct + ESP32 operates gauge</button>
+  <button id="oFail" aria-pressed="false">ESP32 fails</button>
+</div>
+<div class="box" style="padding:8px">
+<svg id="optSvg" viewBox="0 0 700 235" role="img" aria-label="Connection option diagram">
+  <rect x="30" y="40" width="140" height="80" rx="8" fill="none" stroke="currentColor" stroke-width="2"/>
+  <text class="clabel" x="42" y="60">Dash gauge</text>
+  <path d="M70 108 A30 30 0 0 1 130 108" fill="none" stroke="var(--bd)" stroke-width="5"/>
+  <line id="oNeedle" x1="100" y1="108" x2="100" y2="82" stroke="var(--hot)" stroke-width="2.5" stroke-linecap="round"/>
+  <text class="small" x="176" y="74">F</text>
+  <rect x="560" y="120" width="34" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+  <text class="clabel" x="602" y="140">Sender</text>
+  <text class="small" x="602" y="156">engine</text>
+  <path class="wire" d="M577 176 V200 M565 200 h24 M569 206 h16"/>
+  <rect id="oEsp" x="250" y="170" width="180" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+  <text class="clabel" x="262" y="190">ESP32</text>
+  <text class="small" id="oEspTxt" x="262" y="208">measures</text>
+  <!-- A -->
+  <g id="gA">
+    <path class="wire live" d="M170 80 H577 V120"/>
+    <path class="tap" d="M200 80 V150 H300 V170"/>
+    <path class="tap" d="M230 80 V140 H380 V170"/>
+    <text class="small" x="300" y="72">factory wire (YG)</text>
+    <text class="small" x="236" y="132">taps (listen only)</text>
+  </g>
+  <!-- B -->
+  <g id="gB">
+    <path class="wire" d="M170 80 H215"/>
+    <text class="small" x="214" y="84" style="fill:var(--hot)">✕ open</text>
+    <path class="wire live" d="M577 120 V80 H400 V170"/>
+    <text class="small" x="420" y="72">YG wire moved to the ESP32</text>
+    <text class="small" x="440" y="130">Rref + 3.3 V</text>
+  </g>
+  <!-- C -->
+  <g id="gC">
+    <rect x="300" y="40" width="110" height="80" rx="6" fill="none" stroke="var(--warn)" stroke-width="2"/>
+    <text class="clabel" x="312" y="58">Fail-safe relay</text>
+    <text class="small" id="relTxt" x="312" y="74">ON</text>
+    <path class="wire live" d="M170 80 H300"/>
+    <path class="wire live" d="M410 80 H577 V120"/>
+    <path id="cNC" class="wire live" d="M300 80 C330 100, 380 100, 410 80"/>
+    <path id="cNO1" class="wire live" d="M320 120 V170"/>
+    <path id="cNO2" class="wire live" d="M390 120 V170"/>
+    <text class="small" x="200" y="150" id="cLbl1">PWM to gauge</text>
+    <text class="small" x="398" y="150" id="cLbl2">sender to ESP32</text>
+  </g>
+</svg>
+</div>
+<div class="readouts">
+  <div class="ro"><div class="k">Dash gauge shows</div><div class="v" id="oGauge">–</div></div>
+  <div class="ro"><div class="k">ESP32 shows</div><div class="v" id="oRead">–</div></div>
+  <div class="ro"><div class="k">Signal at the ADC</div><div class="v" id="oSig">–</div></div>
+  <div class="ro"><div class="k">PWM duty to gauge</div><div class="v" id="oPwm">–</div></div>
+</div>
+<div class="box" id="oInfo" style="margin-top:10px" aria-live="polite"></div>
+
+<h3 style="margin-top:14px">Comparison</h3>
+<table>
+  <tr><th></th><th>A: passive taps</th><th>B: direct, gauge disconnected</th><th>C: direct + ESP32 operates gauge</th></tr>
+  <tr><td>Dash gauge</td><td>Operates (factory)</td><td><b>Does not operate</b></td><td>Operates (from the ESP32)</td></tr>
+  <tr><td>If the ESP32 fails</td><td>Gauge operates</td><td><b>No temperature at all</b></td><td>Relay returns to the factory circuit</td></tr>
+  <tr><td>Signal near 100 °C</td><td>~10.5 mV/°C, pulsed</td><td>~19 mV/°C, steady</td><td>~19 mV/°C, steady</td></tr>
+  <tr><td>Extra parts</td><td>2 dividers</td><td>Rref, switch, diode</td><td>B parts + MOSFET, 20 Ω resistor, relay, watchdog</td></tr>
+  <tr><td>Main risk</td><td>Rg and ADC offset limit accuracy</td><td>Driver has no gauge</td><td>PWM load on the regulator is not tested</td></tr>
+  <tr><td>Use</td><td><b>First installation</b></td><td>Bench and calibration only</td><td>Upgrade, after a bench test</td></tr>
+</table>
+
+<h2>7. Words in this page</h2>
 <table>
   <tr><th>Word</th><th>Meaning here</th></tr>
   <tr><td>Sender</td><td>The temperature sensor in the engine. It is a resistor that changes with temperature.</td></tr>
@@ -365,6 +438,8 @@ where you connected the meter). The two voltages switch on and off at the same t
   <tr><td>Pin A</td><td>The cluster connector pin that supplies the regulator. It is before the regulator. Do not connect a tap to it.</td></tr>
   <tr><td>Ground</td><td>The metal of the truck (body and engine block). The current goes back to the battery through it.</td></tr>
   <tr><td>Divider</td><td>Two resistors that make a voltage smaller by a constant ratio.</td></tr>
+  <tr><td>PWM</td><td>Pulse-width modulation. A switch turns on and off fast. The duty (on time ÷ total time) sets the average.</td></tr>
+  <tr><td>Relay (normally closed)</td><td>A switch that a coil operates. With no coil power, the "normally closed" contacts connect.</td></tr>
   <tr><td>Ratio k</td><td>Sender wire voltage ÷ feed voltage. It depends only on the temperature. The battery voltage and the pulses have no effect on it.</td></tr>
 </table>
 <p class="sub" style="margin:14px 0 4px">This page is a simple model for learning. The regulator timing and the needle
@@ -569,10 +644,60 @@ speed are only examples. The resistances and the ratio calculation are the same 
     plot(2, css('--live') || '#f59e0b');
   }
 
+
+  // ---------- connection options ----------
+  const OPT = { opt: 'A', fail: false };
+  const OINFO = {
+    A: '<h3>Option A: passive taps</h3><p>The sender stays connected to the gauge. The ESP32 only listens on E and F. The factory circuit does not change. If the ESP32 fails, the gauge continues to operate.</p>',
+    B: '<h3>Option B: direct measurement, gauge disconnected</h3><p>The YG wire goes to the ESP32. The ESP32 sends a small current from 3.3 V through a 100 Ω reference resistor and the sender. The signal is steady and two times stronger than in option A.</p><p><b>The dash gauge stops working.</b> If the ESP32 fails, the driver has no coolant temperature. Use option B only on the bench or for calibration.</p>',
+    C: '<h3>Option C: direct measurement, ESP32 operates the gauge</h3><p>The ESP32 measures the sender as in option B. Then it operates the gauge with a MOSFET and a 20 Ω resistor from F to ground. The gauge needs current, not a voltage, so the ESP32 switches the current on and off fast (PWM). The slow gauge uses the average heat.</p><p>A normally closed relay connects the sender to the gauge when the ESP32 has no power or crashes. Then the factory circuit operates again.</p>'
+  };
+  const ob = { oA: 'A', oB: 'B', oC: 'C' };
+  Object.keys(ob).forEach(id => $(id).onclick = () => {
+    OPT.opt = ob[id];
+    Object.keys(ob).forEach(o => $(o).setAttribute('aria-pressed', o === id));
+  });
+  $('oFail').onclick = () => { OPT.fail = !OPT.fail; $('oFail').setAttribute('aria-pressed', OPT.fail); };
+  let lastOpt = '';
+  function renderOpt() {
+    const T = S.temp, rs = rsOf(T), o = OPT.opt, fail = OPT.fail;
+    ['A', 'B', 'C'].forEach(k => $('g' + k).style.display = k === o ? '' : 'none');
+    const relayOn = o === 'C' && !fail;
+    if (o === 'C') {
+      $('relTxt').textContent = relayOn ? 'ON (ESP32 healthy)' : 'OFF (factory path)';
+      $('cNC').style.display = relayOn ? 'none' : '';
+      ['cNO1', 'cNO2', 'cLbl1', 'cLbl2'].forEach(id => $(id).style.display = relayOn ? '' : 'none');
+    }
+    $('oEsp').setAttribute('stroke', fail ? 'var(--hot)' : 'currentColor');
+    $('oEspTxt').textContent = fail ? 'FAILED (no power)' : 'measures';
+    // needle position: C..H between 50 and 115 C
+    const gaugeWorks = o === 'A' || o === 'C';
+    const frac = gaugeWorks ? Math.max(0, Math.min(1, (T - 50) / 65)) : -0.1;
+    $('oNeedle').setAttribute('transform', `rotate(${-70 + 140 * Math.max(0, frac) - (gaugeWorks ? 0 : 8)} 100 108)`);
+    let g, r, sig, pwm = '—';
+    if (o === 'A') { g = T + ' °C (factory)'; r = fail ? 'off' : T.toFixed(0) + ' °C'; sig = '~10.5 mV/°C, pulsed'; }
+    else if (o === 'B') {
+      g = 'below C (no signal)';
+      r = fail ? 'NO TEMPERATURE' : T.toFixed(0) + ' °C';
+      sig = (3.3 * rs / (rs + 100)).toFixed(2) + ' V, ~19 mV/°C';
+    } else {
+      g = T + ' °C' + (relayOn ? ' (from ESP32)' : ' (factory)');
+      r = fail ? 'off' : T.toFixed(0) + ' °C';
+      sig = relayOn ? (3.3 * rs / (rs + 100)).toFixed(2) + ' V, ~19 mV/°C' : '—';
+      if (relayOn) pwm = (100 * Math.pow((RG + 20) / (RG + rs), 2)).toFixed(1) + ' %';
+    }
+    $('oGauge').textContent = g; $('oGauge').className = 'v ' + (o === 'B' ? 'st-bad' : '');
+    $('oRead').textContent = r; $('oRead').className = 'v ' + (r === 'NO TEMPERATURE' ? 'st-bad' : '');
+    if (fail) sig = '— (ESP32 off)';
+    $('oSig').textContent = sig; $('oPwm').textContent = pwm;
+    if (lastOpt !== o) { $('oInfo').innerHTML = OINFO[o]; lastOpt = o; }
+  }
+
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     render(sim(dt));
+    renderOpt();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

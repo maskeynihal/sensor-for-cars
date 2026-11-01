@@ -23,11 +23,19 @@
    `Rs = Rg × Vs / (Vfeed − Vs)`. Independent of feed level and pulsing. Needs two ADC channels and a known Rg.
 4. **Replace the sender with a dual-output one, or add our own NTC sender**: no published dual sender found for the 2H.
    An extra sender needs a spare port or a hose adapter.
-5. **Disconnect the gauge and drive it from the ESP32**: breaks the factory gauge if the ESP32 fails. Rejected.
+5. **Option B: disconnect the gauge and measure the sender directly** (Rref 100 Ω from a switched 3.3 V). About
+   19 mV/°C and a steady signal, but the dash gauge stops working, and an ESP32 failure leaves the driver with no
+   temperature. Bench and calibration (M4) use only.
+6. **Option C: measure directly, then operate the gauge from the ESP32** (PWM low-side MOSFET + 20 Ω Rmin, duty
+   `((Rg+Rmin)/(Rg+Rs))²`), behind a normally closed fail-safe relay that restores the factory circuit when the ESP32
+   is off or crashes. Keeps the gauge, best signal, most parts. The regulator's behaviour with a PWM load is untested.
+   Details and a comparison table: [report section 8](../../projects/hj60_coolant/docs/gauge-tap-report.md#8-other-connection-options-b-and-c).
 
 ## Decision
 
-Proposed: option 3 as the primary reading. Measure Rg on the truck and calibrate the sender curve before trusting
+Proposed: option 3 (option A in the report) as the primary reading. Option 6 (C) is the planned upgrade if option 3
+is not accurate enough after M4/M5, and only with the fail-safe relay and a bench test of the regulator. Option 5 (B)
+is not for a truck that is driven. Measure Rg on the truck and calibrate the sender curve before trusting
 absolute values. Keep option 4 (a PTFE DS18B20 in an upper-hose thermowell) as the planned cross-check for coolant loss.
 
 ## Consequences
