@@ -45,3 +45,11 @@ absolute values. Keep option 4 (a PTFE DS18B20 in an upper-hose thermowell) as t
 - An open sender, a shorted sender, or no feed is a fault, not "cold".
 - Accuracy depends on Rg (1 Ω ≈ 4% in Rs), channel matching, and the engine-to-cabin ground offset.
 - Accept after the truck measurements M1 to M5 in the report agree with a reference thermometer.
+
+## Note (2026-11-01): build-time switch
+
+The owner asked for option 5 (B) in code. The sketch now has `senderMode` (`SENDER_MODE_A` = option 3,
+`SENDER_MODE_B` = option 5). The default is B, at the owner's request. Mode B reads Vtop and Vs through matched 47k/47k
+dividers (an undivided Vs near 3 V is compressed by the ADC, so an open wire read as "cold"), and checks the wire
+with the excitation off (`FAULT-BACKFEED`). This ADR stays Proposed until the truck measurements M1–M5.
+

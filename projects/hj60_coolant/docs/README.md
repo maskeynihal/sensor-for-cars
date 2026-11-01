@@ -5,46 +5,95 @@ Why the circuit looks like this: [gauge-tap-report.md](gauge-tap-report.md). Kee
 
 ## Bill of materials
 
+Common parts:
+
 | Qty | Part | Notes |
 |---|---|---|
-| 1 | ESP32 DevKit V1 (WROOM-32) | 5 V into VIN/5V |
-| 1 | 1.3" SH1106 OLED 128x64 I2C | 0x3C, 3.3 V |
-| 1 | Active buzzer 5 V | Driven through Q1 |
-| 1 | NPN transistor (2N2222 / S8050) + 1 kΩ base resistor + 1N4148 across the buzzer | Buzzer driver |
-| 2 | 68 kΩ 0.1% | Divider top, one per tap (7.8:1 with the 10 kΩ) |
-| 2 | 10 kΩ 0.1% | Divider bottom |
-| 2 | 100 nF ceramic | Anti-alias, ADC pin to GND |
-| 2 | BAT54S | Clamp each ADC pin to 3V3 / GND |
+| 1 | ESP32 DevKit V1 (WROOM-32) | 5 V into VIN/5V. GPIO16/17 are free on WROOM (not on WROVER). |
+| 1 | ILI9488 3.5" 480x320 SPI TFT | 3.3 V logic. MISO not connected. Check the LED pin: if the module has no backlight transistor, drive it through an NPN or MOSFET (60–100 mA). |
+| 1 | Momentary push button | GPIO33 to ground. Internal pull-up. |
+| 1 | Active buzzer 5 V + NPN (2N2222 / S8050) + 1 kΩ base resistor + 1N4148 across the buzzer | Buzzer driver |
+| 1 | 68 kΩ + 10 kΩ (0.1%) + 100 nF + BAT54S | Battery voltage divider to GPIO32 |
 | 1 | 12 V → 5 V automotive front end | See [ADR 0009](../../../docs/adr/0009-hj60-12v-power-front-end.md): 1 A fuse, reverse protection, TVS (standoff ~26–28 V), buck rated ≥ 40 V in (60 V preferred) |
 | - | Locking connectors, soldered perfboard, strain relief | No breadboard or Dupont in the truck |
 
+Sender circuit, **mode B** (direct, default in the sketch):
+
+| Qty | Part | Notes |
+|---|---|---|
+| 1 | P-MOSFET (e.g. AO3401) + NPN (2N2222) + 10k / 1k resistors | GPIO26 HIGH switches 3.3 V on |
+| 1 | Schottky diode (e.g. BAT54 / 1N5817) | Stops a short to battery voltage from reaching 3.3 V |
+| 1 | Rref 100 Ω 0.1%, 0.25 W | Reference resistor |
+| 2 | 47 kΩ + 47 kΩ 0.1% + 10 nF | Matched dividers: Vtop → GPIO34, Vs → GPIO35 |
+| 1 | BAT54S | Clamp on the Vs pin |
+
+Sender circuit, **mode A** (passive taps):
+
+| Qty | Part | Notes |
+|---|---|---|
+| 2 | 68 kΩ + 10 kΩ 0.1% + 100 nF + BAT54S | Gauge E → GPIO34, gauge F → GPIO35 |
+
+## Pins
+
+| Function | GPIO | Note |
+|---|---|---|
+| TFT SCK / MOSI | 18 / 23 | VSPI |
+| TFT CS / DC / RST | 5 / 16 / 17 | |
+| TFT backlight | 21 | PWM |
+| Buzzer (via NPN) | 25 | |
+| Excitation switch (mode B) | 26 | HIGH = on, about 2 ms in each 100 ms |
+| Battery (68k/10k) | 32 | ADC1 |
+| Mode A: gauge E / Mode B: Vtop | 34 | ADC1, input only |
+| Mode A: gauge F / Mode B: Vs | 35 | ADC1, input only |
+| Screen button | 33 | To ground |
+
 ## Wiring
+
+Mode B (YG wire disconnected from the gauge):
+
+```
+ 3V3 ─[P-MOSFET, GPIO26]─►|─ Vtop ─[Rref 100 Ω]─┬─ Vs ── YG wire ── sender ── ⏚ engine
+                       Schottky  │              │
+                     47k/47k+10nF → GPIO34   47k/47k+10nF + BAT54S → GPIO35
+```
+
+Mode A (dash gauge stays connected):
 
 | From | To | Notes |
 |---|---|---|
-| Temp gauge terminal **E** (regulated feed, after the regulator) | 68k → GPIO34, 10k + 100 nF to GND | Feed tap. **Not cluster connector pin A** (regulator input). E–F must read ~25 Ω (report step M0) |
-| Temp gauge terminal **F** / sender wire (YG) | 68k → GPIO35, 10k + 100 nF to GND | Sender tap. The gauge stays connected |
-| Cluster ground | ESP32 GND | Same ground the taps reference |
-| OLED SDA / SCL | GPIO21 / GPIO22 | 3V3 / GND |
+| Temp gauge terminal **E** (after the regulator) | 68k → GPIO34, 10k + 100 nF to GND | **Not cluster connector pin A**. E–F must read ~25 Ω (step M0) |
+| Temp gauge terminal **F** / sender wire (YG) | 68k → GPIO35, 10k + 100 nF to GND | The gauge stays connected |
+
+Both modes:
+
+| From | To | Notes |
+|---|---|---|
+| Cluster ground | ESP32 GND | Same ground the ADC inputs reference |
+| Ignition 12 V (after the fuse and the reverse-protection diode) | 68k → GPIO32, 10k + 100 nF to GND | Battery voltage (reads about 0.3 V low behind a Schottky) |
+| TFT VCC / GND | 3.3 V or 5 V (check the module) / GND | |
+| Button | GPIO33 and GND | |
 | Buzzer (via Q1 collector) | GPIO25 → 1 kΩ → Q1 base | Buzzer + to 5 V |
 | Front end 5 V out | ESP32 5V/VIN | Never 12 V straight in |
 
 Rules:
 
-- The taps are high impedance only. Nothing below ~100 kΩ on E or F.
-- No ohmmeter on the sender while it's connected or powered.
-- Don't confuse the gauge sender (single terminal, in the head) with the 2-pin glow-plug-control sensor.
+- Mode A taps are high resistance only. Nothing below ~100 kΩ on E or F.
+- No ohmmeter on the sender while it is connected or powered.
+- Do not mix up the gauge sender (single terminal, in the head) and the 2-pin glow-plug-control sensor.
+- Mode B: check the backfeed fault on the bench. Connect the YG wire to 12 V through a 1 kΩ resistor. The screen must
+  show "WIRE HAS VOLTAGE".
 
 ## Power
 
-12 V truck, single battery: 12.9 V engine off, 14.0 V running. Ignition-switched, through the front end in ADR 0009.
+12 V truck, one battery: 12.9 V engine off, 14.0 V running. Ignition switched, through the front end in ADR 0009.
 
 ## Sim vs real differences
 
 | Real hardware | Emulator | Why |
 |---|---|---|
 | ESP32 DevKit V1 | ESP32 DevKit C v4 | Same chip (WROOM-32) |
-| SH1106 | SSD1306 via `emulator/wokwi/shims` | Wokwi has no SH1106 ([ADR 0005](../../../docs/adr/0005-sim-display-shim-sh1106.md)) |
-| Gauge feed + sender through 7.8:1 dividers | Two potentiometers straight onto GPIO34/35 | Wokwi doesn't simulate resistor networks or the pulsing regulator |
-| Pulsing bimetal regulator, contact bounce | Native tests only (`Truck` model in `test_hj60_coolant.cpp`) | |
-| ESP32 ADC with eFuse calibration | Wokwi ADC reads about 3.47 V × position + 0.137 V | The scenario picks pot positions from the measured mapping |
+| ILI9488 480x320 | ILI9341 320x240 via `emulator/wokwi/shims` | Wokwi has no ILI9488 ([ADR 0010](../../../docs/adr/0010-hj60-ili9488-tft-and-sim-shim.md)). The UI scales. |
+| Mode B sender circuit | Custom chip `chips/hj60-sender.chip.c` | Wokwi pots ignore VCC, so they cannot model the switched excitation ([ADR 0011](../../../docs/adr/0011-hj60-wokwi-sender-chip.md)) |
+| Battery divider | Potentiometer on GPIO32 | Wokwi does not simulate resistor networks |
+| ESP32 ADC (calibrated) | Wokwi ADC model with ~+0.14 V offset | The sim reads 10–20 °C low at the hot end. The scenario checks states only. |
+| Mode A pulsing regulator, contact bounce | Native tests only | |

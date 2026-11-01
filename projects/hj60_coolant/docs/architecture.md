@@ -4,45 +4,84 @@
 
 ```mermaid
 flowchart TD
-  S[setup: Serial, ADC 11 dB, OLED, buzzer LOW] --> L{loop}
-  L -->|every 10 ms| P["samplePair(): feed, sender, feed<br/>keep if feed > 3 V and moved ≤ 3%"]
-  L -->|every 1 s| W["evaluateWindow(): ≥5 pairs → median k<br/>Rs = 25·k/(1−k) → °C"]
-  W --> G[log line + redraw OLED]
-  L --> B[driveBuzzer]
+  S[setup: Serial, pins, ADC 11 dB, TFT, backlight] --> L{loop}
+  L -->|mode A, every 10 ms| PA["samplePairA(): feed, sender, feed<br/>keep if feed > 3 V and moved ≤ 3%"]
+  L -->|mode B, every 100 ms| PB["serviceExcitationB(): read Vs with excitation off (backfeed)<br/>GPIO26 on, wait 2 ms, read Vtop + Vs, GPIO26 off"]
+  L -->|every 50 ms| BT[battery sample]
+  L -->|every 1 s| W["evaluateWindow(): median k → Rs → °C<br/>state + log line"]
+  L --> BZ[driveBuzzer]
+  L --> BN[pollButton]
+  L --> UI["serviceUi(): screen change → full draw<br/>every 500 ms → redraw changed values"]
 ```
+
+`senderMode` selects A or B. It is a global at the top of the sketch. Change it before you flash. The default is B.
 
 ## Reading → state
 
 | Condition | State |
 |---|---|
-| No valid pair since boot (< 5 s) | `WAIT` |
-| No valid pair for 5 s | `FAULT-NOFEED` |
-| k ≥ 0.998 | `FAULT-OPEN` |
+| No valid sample since boot (< 5 s) | `WAIT` |
+| No valid sample for 5 s | `FAULT-NOFEED` (A) / `FAULT-NOEXCITE` (B) |
+| B: wire > 0.6 V with excitation off, in ≥ half the samples of 1 s | `FAULT-BACKFEED` |
+| k ≥ 0.998 (A) / k ≥ 0.985 (B) | `FAULT-OPEN` |
 | Rs < 5 Ω | `FAULT-SHORT` |
 | ≥ 105 °C (stays until < 103 °C) | `ALARM`, buzzer steady |
 | ≥ 100 °C (stays until < 98 °C) | `WARN`, buzzer toggles every 400 ms |
 | otherwise | `OK`, silent |
 
-Faults sound a double chirp every 5 s. A missing OLED is logged and ignored, so the buzzer still works.
+Faults sound a double chirp every 5 s.
 
-Windows with fewer than 5 valid pairs (regulator off-phase) keep the last reading.
+## Screens
+
+| Screen | When | Content |
+|---|---|---|
+| BOOT | 0–1.5 s | FRIEDRUST title art |
+| CHECK | 1.5–6 s | Truck art, progress bar, mode line, then sender and battery result |
+| MAIN | default | RPM (DEMO) + bar, SPD (DEMO), WATER, BATT |
+| GRID | button | RPM, SPEED, WATER TEMP, BATTERY |
+| WATER | button, or automatic on WARN/ALARM | Big water temperature, RPM, SPEED, BATT |
+
+- The button (GPIO33) selects MAIN → GRID → WATER → MAIN. It does nothing during BOOT and CHECK.
+- On WARN or ALARM the WATER screen shows, with a red frame. ALARM flashes the frame. When the state goes back to OK,
+  the screen that the driver chose comes back.
+- A fault replaces the WATER label with its name: SENDER OPEN, SENDER SHORT, WIRE HAS VOLTAGE, NO GAUGE FEED,
+  NO EXCITATION.
+- The UI draws a screen once (full redraw), then only redraws a value when its text changes.
+- The UI uses a 480x320 design grid. `X()`, `Y()` and `textSize()` scale it to the panel (480x320 real, 320x240 in
+  Wokwi).
+- Boot art: `boot_art.h`, 16 colours, 4 bits for each pixel, drawn one row at a time.
 
 ## Constants to set from truck measurements
 
 | Constant | Default | Source / step |
 |---|---|---|
-| `GAUGE_R_OHMS` | 25.0 | FSM 13-74, measure (M1) |
+| `senderMode` | `SENDER_MODE_B` | Owner choice. A keeps the dash gauge working. |
+| `GAUGE_R_OHMS` | 25.0 | A: FSM 13-74, measure (M1) |
+| `REF_R_OHMS` | 100.0 | B: Rref, 0.1% |
 | `SENDER_R0/T0`, `SENDER_R1/T1` | 226 Ω @ 50 °C, 26 Ω @ 115 °C | FSM 13-74, calibrate (M4) |
-| `DIVIDER_RATIO` | 7.8 | 68k/10k; check with M5 |
-| `FEED_ON_V` | 3.0 V | Set below the on-level from M2 |
-| `SAMPLE_MS` / `MIN_PAIRS` | 10 ms / 5 | M2: each 1 s window needs ≥ `MIN_PAIRS` on-samples, or a false FAULT-NOFEED fires |
+| `ADC_OFFSET_MV` | 0 | M5 with 47 Ω and 100 Ω in place of the sender |
+| `DIVIDER_RATIO` | 7.8 | A taps and battery: 68k/10k |
+| `VTOP_RATIO`, `VS_RATIO` | 2.0 | B: 47k/47k |
+| `FEED_ON_V` | 3.0 V | A: below the on-level from M2 |
+| `SAMPLE_MS` / `MIN_PAIRS` | 10 ms / 5 | A: each 1 s window needs ≥ `MIN_PAIRS` on-samples |
+| `BACKFEED_V` | 0.6 V | B: above the ADC offset, below a real backfeed |
 | `WARN_C` / `ALARM_C` | 100 / 105 °C | Report section 5 |
 
 ## Serial protocol (115200)
 
 | Line | Meaning |
 |---|---|
-| `hj60_coolant boot ok` | setup() finished |
-| `OLED not found, continuing without display` | display.begin() failed |
-| `Coolant: 92.4C  Rs:52.1ohm  k:0.676  Feed:11.7V  State:OK` | Once per second |
-| `Coolant: --  Rs:--  k:--  Feed:--  State:FAULT-NOFEED` | Missing values print `--` |
+| `hj60_coolant boot ok  Mode:B (direct, DASH GAUGE DISCONNECTED)` | setup() finished, with the mode |
+| `Coolant: 92.4C  Rs:52.1ohm  k:0.676  Feed:11.7V  Batt:12.9V  Mode:A  State:OK` | Once per second, mode A |
+| `Coolant: 92.4C  Rs:52.1ohm  k:0.343  Vtop:3.00V  Batt:12.9V  Mode:B  State:OK` | Once per second, mode B |
+| `Coolant: --  Rs:--  k:--  Vtop:--  Batt:12.9V  Mode:B  State:FAULT-BACKFEED` | Missing values print `--` |
+
+## Tests
+
+| File | What |
+|---|---|
+| `emulator/native/truck_model.h` | Truck models: mode A (pulsed regulator) and mode B (switched excitation, backfeed) |
+| `emulator/native/test_mode_a.cpp` | 18 tests: conversion, pulsing, bounce, thresholds, faults, log format |
+| `emulator/native/test_mode_b.cpp` | 13 tests: conversion, excitation pulses, thresholds, faults, backfeed, battery |
+| `emulator/native/test_ui.cpp` | 8 tests: boot sequence, mode line, button, alarm screen, fault label, redraws |
+| `emulator/wokwi/scenarios/smoke.yaml` | Mode B: OK → ALARM → FAULT-OPEN → FAULT-BACKFEED |

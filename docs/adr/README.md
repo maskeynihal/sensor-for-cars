@@ -14,3 +14,4 @@ Format: [0000-template.md](0000-template.md). New ADR: `/adr <title>` (Claude Co
 | [0008](0008-hj60-read-oem-sender-ratiometric.md) | Read the OEM gauge sender ratiometrically | Proposed | hj60_coolant |
 | [0009](0009-hj60-12v-power-front-end.md) | 12 V automotive power front end | Proposed | hj60_coolant |
 | [0010](0010-hj60-ili9488-tft-and-sim-shim.md) | ILI9488 TFT, DIYables library, ILI9341 shim in Wokwi | Accepted | hj60_coolant |
+| [0011](0011-hj60-wokwi-sender-chip.md) | Custom Wokwi chip for the mode B sender circuit | Accepted | hj60_coolant |

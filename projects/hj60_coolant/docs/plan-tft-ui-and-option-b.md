@@ -1,7 +1,7 @@
 # Plan: FriedRust TFT dashboard and option B (direct sender measurement)
 
 - Date: 2026-11-01
-- Status: in progress
+- Status: done (2026-11-01). Not on the truck yet.
 - Design source: the owner's mockup (6 screens, orange and cream on black). Art crops are in `docs/img/`.
 
 ## Decisions (owner answers, 2026-11-01)
@@ -9,7 +9,7 @@
 | Question | Answer |
 |---|---|
 | Display | ILI9488 3.5" 480x320 SPI TFT ([ADR 0010](../../../docs/adr/0010-hj60-ili9488-tft-and-sim-shim.md)) |
-| Data that we cannot measure yet | Water and battery are real. RPM and speed show **DEMO** values. |
+| Data that we cannot measure yet | Water and battery are real. RPM and speed have **DEMO** values. |
 | Turbo | No turbo (stock 2H). Remove the BOOST and EGT tiles. |
 | Option A and option B | One setting at the top of the sketch (`senderMode`). Both modes have tests. |
 
@@ -37,12 +37,14 @@ Rules for the screens:
 ## Option B in the firmware
 
 - `senderMode` = `SENDER_MODE_A` (passive taps) or `SENDER_MODE_B` (direct). Change it at the top of the sketch.
-- Option B pins: GPIO26 switches the excitation on. GPIO34 measures Vtop through a 10k/10k divider. GPIO35 measures
-  the sender voltage Vs through a 10k series resistor.
-- The ESP32 switches the excitation on for each measurement, waits for the voltage to become stable, and reads
-  Vtop and Vs. Then it switches the excitation off.
+- Option B pins: GPIO26 switches the excitation on. GPIO34 measures Vtop and GPIO35 measures the sender voltage Vs,
+  each through a matched 47k/47k divider. (The first design read Vs directly. The Wokwi chip showed that an open wire
+  then reads as "cold", because the ADC compresses near 3 V.)
+- For each measurement, the ESP32 switches the excitation on and waits 2 ms. It reads Vtop and Vs. Then it switches
+  the excitation off.
 - `Rs = Rref × Vs / (Vtop − Vs)`, with Rref = 100 Ω.
-- Faults are the same as in option A: open sender, shorted sender, and no excitation (Vtop too low).
+- Faults: open sender, shorted sender, no excitation (Vtop too low), and backfeed (voltage on the wire with the
+  excitation off).
 - **Warning:** with option B, the dash gauge does not operate. The ESP32 display is then the only temperature gauge.
 
 ## Pins (ESP32 DevKit V1)
@@ -83,3 +85,12 @@ Rules for the screens:
 - Real RPM and speed sensors (alternator W terminal and speedometer cable sensor, or GPS).
 - Option C (gauge driver and relay).
 - Logging and limits that the driver can change.
+
+## Results (2026-11-01)
+
+- Native tests: 39 passed, 0 failed, on the sim copy and on the firmware (18 mode A, 13 mode B, 8 UI). Each new
+  check failed when we broke the code on purpose.
+- Wokwi: the mode B scenario passes (OK → ALARM → FAULT-OPEN → FAULT-BACKFEED). Screenshots are in `docs/img/`.
+- Firmware build (ESP32 DevKit V1, ILI9488): 468,547 bytes flash (35%), 25,816 bytes RAM (7%).
+- Not done: upload to the board, and any measurement on the truck.
+

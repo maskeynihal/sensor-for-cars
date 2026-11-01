@@ -403,10 +403,13 @@ This section examines two other options.
 ```
  ESP32 3V3 ──[P-MOSFET switch, GPIO26]──►|── Vtop ──[ Rref 100 Ω 0.1% ]──┬── Vs ── YG wire ── sender ── ⏚ engine
                                      Schottky   │                        │
-                                  10k/10k divider → GPIO34      10k series + clamp → GPIO35
+                              47k/47k + 10 nF → GPIO34     47k/47k + 10 nF + clamp → GPIO35
 ```
 
-**Numbers** (Rref = 100 Ω, 3.3 V excitation):
+The two dividers are the same (0.1% resistors), so their gain errors cancel in the ratio.
+
+**Numbers** (Rref = 100 Ω, about 3.0 V after the Schottky diode). The Vs column is the voltage at the sender, before
+the divider:
 
 | °C | Rs (Ω) | Vs (V) | Current (mA) |
 |---|---|---|---|
@@ -417,21 +420,29 @@ This section examines two other options.
 | 105 | ~35 | 0.85 | 24.5 |
 | 115 | 26 | 0.68 | 26.2 |
 
-- Sensitivity near 100 °C: about **19 mV for each °C**. Option A gives about 10.5 mV for each °C. Thus option B is
-  approximately two times more sensitive.
+- Sensitivity near 100 °C: about **19 mV for each °C** at the sender. After the 2:1 divider, this is about 9.5 mV for
+  each °C at the ADC pin. Option A gives about 10.5 mV for each °C at the pin. The signal in option B is steady, so the
+  average of the samples is more accurate.
 - The excitation is steady. There are no regulator pulses, so the firmware does not need to ignore samples.
 - The sender gets about 20–25 mW. The coolant removes this heat, so the self-heating error is very small.
-- The ESP32 switches the excitation on only during a measurement (for example 10 ms in each 100 ms). This decreases
-  the power.
-- Vtop (3.3 V) is above the accurate ADC range, so a 10k/10k divider halves it before GPIO34. Step M5 calibrates the
-  divider ratio.
-- Above about 2.45 V (below about 40 °C), the ADC is less accurate. This is acceptable because cold readings do not
-  trigger alarms.
+- The firmware switches the excitation on for about 2 ms in each 100 ms.
+- Before it switches the excitation on, it reads the sender wire with the excitation off. See "Backfeed check" below.
+- **Vs must go through a divider too.** An open sender wire makes Vs equal to Vtop (about 3.0 V). Above about 2.45 V
+  the ESP32 ADC compresses the reading. In the Wokwi test, an open wire then read as "8 °C, OK" instead of a fault.
+  With the 2:1 dividers, both pins stay at 1.5 V or less, and an open wire gives k = 1.0.
+- The ESP32 ADC has an offset of up to about 0.15 V near 0 V. An offset does not cancel in the ratio. The Wokwi ADC
+  model has a similar offset and reads about 10–20 °C low at the hot end. The firmware has `ADC_OFFSET_MV` for this.
+  Set it from step M5, with the same 47 Ω and 100 Ω resistors as option A.
 
 **Protection:** the YG wire is in the engine bay. It can touch a battery wire.
 
 - The Schottky diode stops current from a short to battery voltage before it reaches the 3.3 V supply.
-- A 10 kΩ series resistor and a clamp diode protect GPIO35.
+- The 47 kΩ divider resistor and a clamp diode protect GPIO35.
+- **Backfeed check:** before each measurement, the firmware reads the sender wire with the excitation off. If the
+  voltage is more than 0.6 V in half or more of the samples in one second, it shows FAULT-BACKFEED. This finds two
+  problems: terminal F is still connected to the gauge (regulator pulses), or the wire touches a battery wire.
+  The ADC offset gives about 0.3 V at the wire, after the 2:1 divider. A real backfeed gives more than 3 V at the
+  clamp. Thus 0.6 V separates the two.
 - Measure the ground offset between the engine block and the ESP32 ground (step M3). In option B, the sender current
   also flows through this ground path.
 
