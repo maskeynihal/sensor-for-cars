@@ -99,6 +99,12 @@ The FSM gives two points. A Beta (NTC) fit through them gives B ≈ 4173 K. **Th
 150 Ω → **about 60 °C**. That's consistent with "warm, just ran". The sender is probably healthy. A cold engine at 20 °C
 should read around 850 Ω; check that too (M4).
 
+**Error bar: large until M4.** A forum post for the FJ60 (petrol) sender quotes 27 Ω at 100 °C and 23 Ω at 105 °C
+([ih8mud](https://forum.ih8mud.com/threads/how-i-fixed-my-temp-gauge.1014115/)). On this Beta fit those resistances
+read about 114 °C and 119 °C, so the two sources disagree by about 14 °C right at the WARN/ALARM thresholds. Different
+engine and sender, but it shows how loose a two-point fit is. **Until the M4 calibration, readings near 100 °C can be
+off by more than ±10 °C. Don't trust WARN/ALARM yet.**
+
 ### 3.2 Ohms with the gauge connected: fluctuating
 
 A multimeter on ohms pushes a small current and measures the voltage. Connected to the gauge, the sender is in
@@ -140,8 +146,18 @@ k = Vs / Vfeed = Rs / (Rs + Rg)     ⇒     Rs = Rg × k / (1 − k)
 
 ### 4.1 Signal taps: two high-impedance dividers, one per channel
 
-Tap at the back of the cluster: terminal **E** (feed) and terminal **F** / the YG wire (sender). Use identical
-networks:
+Tap the two ends of the temperature gauge's heater: **E** (regulated feed) and **F** / the YG wire (sender). Use
+identical networks.
+
+**Find E and F first (M0).** The FSM labels the cluster connector pins D/B/A/13/1/G (Fig 13-148), not E/F, and the
+regulator sits inside the fuel gauge. The regulated feed may not come out on the connector, so you may have to open
+the cluster and tap at the gauge's own terminals.
+
+- **Don't use connector pin A as the feed.** A is the regulator *input*. It stays high while the regulator is off and
+  the sender drops to ~0 V. The firmware would accept those pairs as valid with k ≈ 0 and report FAULT-SHORT or a
+  false hot reading.
+- Check: key off, cluster unplugged, the two tap points read **about 25 Ω** between them (that's the gauge heater).
+- Check: key on, the feed tap never reads lower than the sender tap.
 
 ```
  tap ──[ 120 kΩ 0.1% ]──┬───────────┬──────► ESP32 ADC1 pin (GPIO34 = feed, GPIO35 = sender)
@@ -224,8 +240,9 @@ or a coolant-level probe.
 
 | Step | What | How | Record |
 |---|---|---|---|
+| M0 | Find the tap points | Key off, cluster out. Find two points with about 25 Ω between them: the temp gauge's E and F (may be inside the cluster). **Not connector pin A**. Key on: feed point ≥ sender point at all times | Where E and F are; photo |
 | M1 | Gauge heater Rg | Key off. Unplug the cluster. Ohms across the temp gauge's E and F | Rg (Ω) → `GAUGE_R_OHMS` |
-| M2 | Feed waveform | Build the two dividers (4.1). Flash `projects/_utilities/esp32_gauge_capture`. Key on, capture 30 s cold, and 30 s warm with the engine running | On-level V, period, duty, bounce |
+| M2 | Feed waveform | Build the two dividers (4.1). Flash `projects/_utilities/esp32_gauge_capture`. Key on, capture 30 s cold, and 30 s warm with the engine running | On-level V, period, duty, bounce. Set `FEED_ON_V`; if on-pulses are short (under ~50 ms per second), lower `SAMPLE_MS` / `MIN_PAIRS` or the firmware will raise a false FAULT-NOFEED |
 | M3 | Ground offset | Engine running, lights and fan on. DC mV between the engine block (by the sender) and cluster ground | mV. Above 50 mV, fix the grounds |
 | M4 | Sender curve | Thermometer at the thermostat housing or upper hose (IR gun or a probe), sender disconnected, warm-up from cold. Ohms every 5 °C. Repeat connected using the ESP32 log | A table of °C vs Ω → replace the Beta constants |
 | M5 | Channel match | Replace the sender with a 47 Ω and a 100 Ω resistor. Check the ESP32 Rs reading | Correction factor if off by more than 1% |

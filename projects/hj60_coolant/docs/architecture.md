@@ -35,6 +35,7 @@ Windows with fewer than 5 valid pairs (regulator off-phase) keep the last readin
 | `SENDER_R0/T0`, `SENDER_R1/T1` | 226 Ω @ 50 °C, 26 Ω @ 115 °C | FSM 13-74, calibrate (M4) |
 | `DIVIDER_RATIO` | 13.0 | 120k/10k; check with M5 |
 | `FEED_ON_V` | 3.0 V | Set below the on-level from M2 |
+| `SAMPLE_MS` / `MIN_PAIRS` | 10 ms / 5 | M2: each 1 s window needs ≥ `MIN_PAIRS` on-samples, or a false FAULT-NOFEED fires |
 | `WARN_C` / `ALARM_C` | 100 / 105 °C | Report section 5 |
 
 ## Serial protocol (115200)

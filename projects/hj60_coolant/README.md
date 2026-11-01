@@ -9,7 +9,7 @@ disturbing the dash gauge. OLED readout and buzzer alarm.
 | Emulator board | ESP32 DevKit C v4 (`esp32:esp32:esp32`) |
 | Serial | 115200 baud |
 | Parts | Gauge taps E/F via 13:1 dividers on GPIO34/35, SH1106 OLED (21/22), active buzzer via NPN (GPIO25) |
-| Status | Native tests and Wokwi pass. Not on the truck yet: needs measurements M1–M6 ([report](docs/gauge-tap-report.md#6-plan)) |
+| Status | Native tests and Wokwi pass. Not on the truck yet: needs measurements M0–M6 ([report](docs/gauge-tap-report.md#6-plan)). **Don't trust WARN/ALARM until the M4 sender calibration** (two-point curve, ±10 °C near 100 °C) |
 | Idea | [docs/ideas/2026-11-01-hj60-coolant.md](../../docs/ideas/2026-11-01-hj60-coolant.md) |
 
 ## Folders

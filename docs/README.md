@@ -10,3 +10,4 @@
 
 Per-project hardware and software docs live in `projects/<name>/docs/`:
 - [water_monitor](../projects/water_monitor/README.md)
+- [hj60_coolant](../projects/hj60_coolant/README.md)

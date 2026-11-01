@@ -22,7 +22,7 @@ Why the circuit looks like this: [gauge-tap-report.md](gauge-tap-report.md). Kee
 
 | From | To | Notes |
 |---|---|---|
-| Temp gauge terminal **E** (regulated feed) | 120k → GPIO34, 10k + 100 nF to GND | Feed tap |
+| Temp gauge terminal **E** (regulated feed, after the regulator) | 120k → GPIO34, 10k + 100 nF to GND | Feed tap. **Not cluster connector pin A** (regulator input). E–F must read ~25 Ω (report step M0) |
 | Temp gauge terminal **F** / sender wire (YG) | 120k → GPIO35, 10k + 100 nF to GND | Sender tap. The gauge stays connected |
 | Cluster ground | ESP32 GND | Same ground the taps reference |
 | OLED SDA / SCL | GPIO21 / GPIO22 | 3V3 / GND |
