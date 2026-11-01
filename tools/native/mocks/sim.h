@@ -8,6 +8,7 @@
 #pragma once
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,10 @@ extern unsigned long now;  // ms
 extern uint8_t pinLevel[kPins];
 extern uint8_t pinModeOf[kPins];
 extern int analogValue[kPins];
+// ESP32 analogReadMilliVolts(): returns analogMvFn(pin) if set (time-varying
+// inputs, e.g. a pulsing gauge regulator; read sim::now inside), else analogMv[pin].
+extern int analogMv[kPins];
+extern std::function<int(uint8_t pin)> analogMvFn;
 extern std::vector<PinEvent> pinLog;  // every digitalWrite that changed a level
 
 // ---- Serial ----

@@ -25,13 +25,16 @@ fi
 if [[ -n "$arg" ]]; then scenarios=("$arg"); else scenarios=(scenarios/*.yaml); fi
 [[ -e "${scenarios[0]}" ]] || die "no scenarios in $WOKWI_DIR/scenarios"
 
+# SIM_SCREENSHOT=off in project.env skips the OLED screenshot (on ESP32 it kept
+# wokwi-cli running after the scenario passed, until the free-tier 5 min cutoff).
 rc=0
 for s in "${scenarios[@]}"; do
   base="$(basename "$s" .yaml)"
   info "wokwi scenario: $s"
+  shot=(--screenshot-part oled --screenshot-time 8000 --screenshot-file "$BUILD/wokwi/$base.oled.png")
+  [[ "${SIM_SCREENSHOT:-on}" == "off" ]] && shot=()
   if wokwi-cli . --scenario "$s" --timeout 30000 \
-       --serial-log-file "$BUILD/wokwi/$base.serial.log" \
-       --screenshot-part oled --screenshot-time 8000 --screenshot-file "$BUILD/wokwi/$base.oled.png"; then
+       --serial-log-file "$BUILD/wokwi/$base.serial.log" ${shot[@]+"${shot[@]}"}; then
     echo "  PASS  $base"
   else
     echo "  FAIL  $base  (serial log: build/$NAME/wokwi/$base.serial.log)"; rc=1

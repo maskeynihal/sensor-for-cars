@@ -164,6 +164,11 @@ networks:
 - **Never** put a low-value part on the tap. The FSM uses a 3.4 W bulb rather than a dead short for a reason: a short
   cooks the gauge heater. Same rule for the probes: no ohms with power on.
 - Use ADC1 pins only (GPIO32 to 39). ADC2 is unavailable while WiFi is on.
+- **ESP32 ADC offset is the biggest error source.** Even with eFuse calibration (`analogReadMilliVolts`), expect
+  roughly ±20–30 mV. At a 0.9 V feed that is up to about 3% in k, or a few °C. Two fixes: calibrate with fixed
+  resistors (M5) and add an offset constant if needed, and once M2 shows the real on-level, lower the divider ratio
+  (e.g. 8:1) so the signal sits nearer 1.5 V. The clamp still protects the pin when an open sender pushes the tap
+  higher.
 
 ### 4.2 Power: 24 V truck → 5 V ESP32
 
@@ -206,6 +211,7 @@ water_monitor was a bench project that watched "a tank of water". As an HJ60 coo
 | 9 | DHT22 on the dash | A parked dash in sun can pass its 80 °C rating | Drop it, or mount it shaded (not needed for coolant) |
 | 10 | Only a voltmeter / ohmmeter to diagnose | Pulsed circuit (3.3) | ESP32 capture sketch (M2), ratio method |
 | 11 | Measuring ohms in circuit | Meaningless reading (3.2) | Disconnect and key off |
+| 12 | `display.begin()` failure halts the sketch (`for(;;)`) | A loose OLED connector would also kill the alarm | Log it and keep running (done in hj60_coolant) |
 
 A gap that remains even with the new design: **coolant loss**. If the coolant drops below the sender, it sits in steam
 or air and reads *cooler*, and the gauge (and our ESP32) can show a falling temperature while the engine overheats.
@@ -225,7 +231,7 @@ or a coolant-level probe.
 | M5 | Channel match | Replace the sender with a 47 Ω and a 100 Ω resistor. Check the ESP32 Rs reading | Correction factor if off by more than 1% |
 | M6 | System voltage | Engine off and running, at the fuse block | 24 to 29 V? |
 
-### Phase 1: read the OEM sender (built in this repo, see `projects/hj60_coolant`)
+### Phase 1: read the OEM sender (built: `projects/hj60_coolant`, native tests + Wokwi)
 
 - ESP32 samples feed and sender as pairs, keeps pairs where the feed is "on" (> 3 V at the tap) and stable (rejects
   pairs straddling a contact edge), takes the median k over 1 s, and converts k → Rs → °C.

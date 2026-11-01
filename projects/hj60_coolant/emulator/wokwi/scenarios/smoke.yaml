@@ -1,0 +1,48 @@
+# Wokwi can't simulate the resistor dividers or the pulsing regulator, so the
+# two potentiometers stand in for the post-divider ADC voltages (0..3.3 V).
+# Wokwi's ESP32 ADC is not ideal: measured V ~= 3.47 * position + 0.137 V
+# (2026-11-01 run), so positions are picked from that, not from 3.3 * position.
+#   feed   0.30  -> 1.18 V at the ADC (15.3 V at the tap)
+#   sender 0.206 -> k 0.72 -> ~84 C (OK)
+#   sender 0.12  -> k 0.47 -> ~120 C (ALARM)
+#   sender 0.30  -> k 1.00 -> FAULT-OPEN
+# Pulsing, bounce and the no-feed fault are covered by the native tests.
+name: 'hj60_coolant smoke'
+version: 1
+author: 'maskeynihal'
+steps:
+  - wait-serial: 'hj60_coolant boot ok'
+  - set-control:
+      part-id: feed
+      name: position
+      value: 0.3
+  - set-control:
+      part-id: sender
+      name: position
+      value: 0.206
+  - delay: 1500ms
+  - wait-serial: 'State:OK'
+  - expect-pin:
+      part-id: mcu
+      name: 25
+      value: 0
+
+  - set-control:
+      part-id: sender
+      name: position
+      value: 0.12
+  - wait-serial: 'State:ALARM'
+  - delay: 200ms
+  - expect-pin:
+      part-id: mcu
+      name: 25
+      value: 1
+
+  - set-control:
+      part-id: sender
+      name: position
+      value: 0.3
+  - wait-serial: 'State:FAULT-OPEN'
+  # Keep running past make sim's 8 s OLED screenshot; ending earlier makes
+  # wokwi-cli wait for the screenshot until its 30 s timeout.
+  - delay: 3000ms

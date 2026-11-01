@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "author": "maskeynihal",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "mcu", "top": 0, "left": 0, "attrs": {} },
+    { "type": "board-ssd1306", "id": "oled", "top": -150, "left": 60, "attrs": { "i2cAddress": "0x3c" } },
+    { "type": "wokwi-potentiometer", "id": "feed", "top": -150, "left": 250, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "sender", "top": -150, "left": 360, "attrs": {} },
+    { "type": "wokwi-buzzer", "id": "buzzer", "top": -150, "left": -90, "attrs": { "volume": "0.1" } }
+  ],
+  "connections": [
+    [ "mcu:TX", "$serialMonitor:RX", "", [] ],
+    [ "mcu:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "oled:GND", "mcu:GND.1", "black", [] ],
+    [ "oled:VCC", "mcu:3V3", "red", [] ],
+    [ "oled:SDA", "mcu:21", "blue", [] ],
+    [ "oled:SCL", "mcu:22", "yellow", [] ],
+
+    [ "feed:GND", "mcu:GND.1", "black", [] ],
+    [ "feed:VCC", "mcu:3V3", "red", [] ],
+    [ "feed:SIG", "mcu:34", "orange", [] ],
+    [ "sender:GND", "mcu:GND.1", "black", [] ],
+    [ "sender:VCC", "mcu:3V3", "red", [] ],
+    [ "sender:SIG", "mcu:35", "green", [] ],
+
+    [ "buzzer:1", "mcu:GND.2", "black", [] ],
+    [ "buzzer:2", "mcu:25", "purple", [] ]
+  ],
+  "dependencies": {}
+}

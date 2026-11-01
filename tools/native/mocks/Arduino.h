@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <type_traits>
 
 #include "sim.h"
 
@@ -38,8 +39,8 @@ typedef unsigned int word;
 #define PI 3.1415926535897932384626433832795
 
 using std::abs;
-template <class T, class U> auto min(T a, U b) -> decltype(a < b ? a : b) { return a < b ? a : b; }
-template <class T, class U> auto max(T a, U b) -> decltype(a > b ? a : b) { return a > b ? a : b; }
+template <class T, class U> auto min(T a, U b) -> typename std::common_type<T, U>::type { return a < b ? a : b; }
+template <class T, class U> auto max(T a, U b) -> typename std::common_type<T, U>::type { return a > b ? a : b; }
 template <class T, class L, class H> T constrain(T x, L lo, H hi) { return x < lo ? lo : (x > hi ? hi : x); }
 long map(long x, long in_min, long in_max, long out_min, long out_max);
 
@@ -48,6 +49,12 @@ void digitalWrite(uint8_t pin, uint8_t val);
 int digitalRead(uint8_t pin);
 int analogRead(uint8_t pin);
 void analogWrite(uint8_t pin, int val);
+// ESP32 ADC (arduino-esp32 core 3.x)
+typedef enum { ADC_0db, ADC_2_5db, ADC_6db, ADC_11db } adc_attenuation_t;
+uint32_t analogReadMilliVolts(uint8_t pin);
+inline void analogReadResolution(uint8_t) {}
+inline void analogSetAttenuation(adc_attenuation_t) {}
+inline void analogSetPinAttenuation(uint8_t, adc_attenuation_t) {}
 
 unsigned long millis();
 unsigned long micros();

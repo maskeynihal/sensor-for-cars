@@ -1,0 +1,6 @@
+# Wokwi project for the hj60_coolant SIM copy (ESP32 DevKit C v4).
+# Build first: make build-sim P=hj60_coolant
+[wokwi]
+version = 1
+firmware = '../../../../build/hj60_coolant/sim/hj60_coolant_sim.ino.merged.bin'
+elf = '../../../../build/hj60_coolant/sim/hj60_coolant_sim.ino.elf'

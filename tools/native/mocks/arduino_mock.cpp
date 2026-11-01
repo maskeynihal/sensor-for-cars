@@ -8,6 +8,8 @@ unsigned long now = 0;
 uint8_t pinLevel[kPins];
 uint8_t pinModeOf[kPins];
 int analogValue[kPins];
+int analogMv[kPins];
+std::function<int(uint8_t)> analogMvFn;
 std::vector<PinEvent> pinLog;
 std::string serialOut;
 std::string serialIn;
@@ -23,7 +25,8 @@ float dhtHumidity = NAN;
 
 void reset() {
   now = 0;
-  for (int i = 0; i < kPins; i++) { pinLevel[i] = LOW; pinModeOf[i] = INPUT; analogValue[i] = 0; }
+  for (int i = 0; i < kPins; i++) { pinLevel[i] = LOW; pinModeOf[i] = INPUT; analogValue[i] = 0; analogMv[i] = 0; }
+  analogMvFn = nullptr;
   pinLog.clear();
   serialOut.clear();
   serialIn.clear();
@@ -72,6 +75,11 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 
 int digitalRead(uint8_t pin) { return pin < sim::kPins ? sim::pinLevel[pin] : LOW; }
 int analogRead(uint8_t pin) { return pin < sim::kPins ? sim::analogValue[pin] : 0; }
+uint32_t analogReadMilliVolts(uint8_t pin) {
+  if (pin >= sim::kPins) return 0;
+  int mv = sim::analogMvFn ? sim::analogMvFn(pin) : sim::analogMv[pin];
+  return mv < 0 ? 0 : (uint32_t)mv;
+}
 void analogWrite(uint8_t pin, int val) { digitalWrite(pin, val > 127 ? HIGH : LOW); }
 
 unsigned long millis() { return sim::now; }

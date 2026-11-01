@@ -9,6 +9,9 @@
 //    heartbeat <seconds>
 // =====================================================================
 
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2   // ESP32 DevKit boards don't define it
+#endif
 #define STATUS_LED LED_BUILTIN
 const unsigned long HEARTBEAT_MS = 1000;
 
