@@ -48,6 +48,7 @@ make upload   P=hj60_coolant PORT=/dev/cu.usbserial-XXXX   # check senderMode fi
 
 ## Docs
 
+- [Wiring diagram for the ESP32-S3 (open in a browser)](docs/html/wiring-diagram.html), [PNG](docs/img/wiring-diagram.png)
 - [Interactive circuit explainer (open in a browser)](docs/html/circuit-explainer.html): gauge, sender, regulator, ESP32 taps
 - [Report: what the multimeter showed, what went wrong, the plan](docs/gauge-tap-report.md)
 - [Plan: TFT dashboard and option B](docs/plan-tft-ui-and-option-b.md)

@@ -33,6 +33,8 @@ Sender circuit, **mode A** (passive taps):
 |---|---|---|
 | 2 | 68 kΩ + 10 kΩ 0.1% + 100 nF + BAT54S | Gauge E → GPIO4, gauge F → GPIO5 |
 
+Full schematic and wire list: [html/wiring-diagram.html](html/wiring-diagram.html) ([PNG](img/wiring-diagram.png)).
+
 ## Pins
 
 | Function | GPIO | Note |
