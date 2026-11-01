@@ -80,35 +80,40 @@
 <div class="wrap">
 
 <h1>HJ60 coolant temperature gauge: how the circuit works</h1>
-<p class="sub">Based on the Toyota FSM pages 13-73 / 13-74 (BJ, HJ series) and your measurements. 12 V truck, single
-battery. Click any part of the drawing, or step through the tour.</p>
+<p class="sub">Sources: Toyota FSM pages 13-73 and 13-74 (BJ, HJ series), and your measurements. The truck has a 12 V
+system with one battery. Click a part of the drawing, or use the guided tour.</p>
 
-<h2>1. Two parts, in plain words</h2>
+<h2>1. The three parts</h2>
 <div class="grid2">
   <div class="box">
     <h3>The sender (in the engine)</h3>
-    <p>A brass plug screwed into the cylinder head, with its tip sitting in the coolant. Inside is a
-    <b>thermistor</b>: a resistor whose value changes with temperature.</p>
-    <p><b>Hotter coolant → lower resistance.</b> FSM: <b>226 Ω at 50 °C</b>, <b>26 Ω at 115 °C</b>.</p>
-    <p>It has <b>one wire</b> (yellow-green, "YG"). The other side of the circuit is the engine block itself (ground).
-    It doesn't produce a voltage. It just changes how easily current flows.</p>
-    <p class="sub">"Sender" because it sends the temperature to the dash, as a resistance.</p>
+    <p>The sender is a brass plug in the cylinder head. Its tip is in the coolant. It contains a <b>thermistor</b>. A
+    thermistor is a resistor that changes its resistance with temperature.</p>
+    <p><b>When the coolant gets hotter, the resistance decreases.</b> FSM values: <b>226 Ω at 50 °C</b>,
+    <b>26 Ω at 115 °C</b>.</p>
+    <p>The sender has <b>one wire</b> (yellow-green, "YG"). The engine block is the other connection (ground). The sender
+    does not make a voltage. It only controls how much current can flow.</p>
+    <p class="sub">The name "sender" comes from its function: it sends the temperature to the dash, as a resistance.</p>
   </div>
   <div class="box">
     <h3>The gauge (on the dash)</h3>
-    <p>The needle you see. Behind it is a <b>bimetal strip</b> (two metals bonded together that bend when warmed)
-    wrapped in a tiny <b>heater wire</b> (25 Ω, terminals <b>E</b> and <b>F</b>).</p>
-    <p>More current through the heater → strip warms → bends → needle moves toward <b>H</b>.</p>
-    <p>It's <b>slow on purpose</b>: it takes seconds to warm up or cool down, so it averages the current.</p>
+    <p>The gauge is the needle on the dash. Behind the needle is a <b>bimetal strip</b>. A bimetal strip has two metals
+    that are bonded together. It bends when it gets hot. A small <b>heater wire</b> (25 Ω, terminals <b>E</b> and
+    <b>F</b>) is around the strip.</p>
+    <p>More current in the heater makes the strip hotter. The strip bends more, and the needle moves toward <b>H</b>.</p>
+    <p>The gauge is <b>slow by design</b>. It needs some seconds to get hot or cool. Thus it shows the average
+    current.</p>
   </div>
   <div class="box">
     <h3>The voltage regulator (hidden inside the fuel gauge)</h3>
-    <p>A tiny bimetal <b>switch</b> that clicks on and off by itself, a little like a car's indicator flasher.
-    Battery voltage goes from 12.9 V (engine off) to 14 V (running). Without the regulator the needle would rise every
-    time you started the engine.</p>
-    <p>The regulator switches on and off so that the <b>average</b> is about 7 V, whatever the battery is doing. The
-    gauge averages the pulses, so the needle is steady.</p>
-    <p class="sub">This is why your multimeter jumped around: it was reading a voltage that switches on and off.</p>
+    <p>The regulator is a small bimetal <b>switch</b>. It opens and closes again and again, like the flasher unit of
+    a turn signal.</p>
+    <p>The battery voltage is 12.9 V with the engine off and 14 V with the engine running. Without the regulator, the
+    needle would move up each time you start the engine.</p>
+    <p>The regulator keeps the <b>average</b> voltage at about 7 V at all battery voltages. The gauge shows the average
+    of the pulses, so the needle stays steady.</p>
+    <p class="sub">This is the cause of the changing numbers on your multimeter. The meter measured a voltage that
+    switches on and off.</p>
   </div>
 </div>
 
@@ -268,11 +273,11 @@ battery. Click any part of the drawing, or step through the tour.</p>
 <div class="grid2" style="margin-top:12px">
   <div class="box" id="info" aria-live="polite">
     <h3>Click a part</h3>
-    <p>Or use the tour. Turn the ignition on to see the current flow (orange) and the regulator start clicking.</p>
+    <p>Or use the guided tour. Turn the ignition on. Then you can see the current (orange) and the regulator switch.</p>
   </div>
   <div class="box">
     <h3>Guided tour</h3>
-    <p class="sub">Follow the current from the battery to ground.</p>
+    <p class="sub">The tour follows the current from the battery to ground.</p>
     <div class="tour">
       <button id="tPrev">◀ Back</button>
       <button id="tNext">Start tour ▶</button>
@@ -291,11 +296,11 @@ battery. Click any part of the drawing, or step through the tour.</p>
 </div>
 
 <h2>3. The voltage on the wires (scope view)</h2>
-<p class="sub">Last 6 seconds. Blue = feed at E (regulator output). Orange = sender wire F (where you spliced the meter).
-Both switch on and off together. Their <b>ratio</b> stays the same while they're on, so that's what the ESP32
-measures.</p>
+<p class="sub">This view shows the last 6 seconds. Blue = feed at E (regulator output). Orange = sender wire F (the wire
+where you connected the meter). The two voltages switch on and off at the same time. While they are on, their
+<b>ratio</b> does not change. Thus the ESP32 measures the ratio.</p>
 <canvas id="scope" width="1000" height="150" aria-label="Oscilloscope trace of feed and sender voltage"></canvas>
-<div class="legend"><span><span class="sw" style="background:var(--feed)"></span>feed E</span><span><span class="sw" style="background:var(--live)"></span>sender wire F</span><span>Pulse timing is illustrative; the real timing is measured in step M2.</span></div>
+<div class="legend"><span><span class="sw" style="background:var(--feed)"></span>feed E</span><span><span class="sw" style="background:var(--live)"></span>sender wire F</span><span>The pulse timing is only an example. Step M2 measures the real timing.</span></div>
 
 <h2>4. Your multimeter, replayed</h2>
 <div class="grid2">
@@ -312,10 +317,10 @@ measures.</p>
     <h3>What you saw, and why</h3>
     <table>
       <tr><th>You measured</th><th>What it means</th></tr>
-      <tr><td>150 Ω, sender unplugged, engine warm</td><td>Correct reading. On the FSM curve that's about <b>60 °C</b>. Sender looks healthy.</td></tr>
-      <tr><td>Ohms jumping with the wire connected</td><td>The meter also sees the path back through the gauge heater, the regulator and the fuel gauge. Not a fault. <b>Only measure ohms unplugged, key off.</b></td></tr>
-      <tr><td>0 V key off</td><td>Correct: no power to the gauges.</td></tr>
-      <tr><td>~10 V for a few seconds, then wild</td><td>The regulator starts cold with its switch closed (steady ~11.7 V feed × 150/(150+25) ≈ 10 V). Then it warms and starts clicking on/off. A meter can't show a steady number for that.</td></tr>
+      <tr><td>150 Ω, sender disconnected, engine warm</td><td>This reading is correct. On the FSM curve, it agrees with about <b>60 °C</b>. The sender is probably serviceable.</td></tr>
+      <tr><td>Ohms value changes with the wire connected</td><td>The meter also measures a second path through the gauge heater, the regulator and the fuel gauge. This is not a fault. <b>Measure ohms only with the wire disconnected and the key off.</b></td></tr>
+      <tr><td>0 V with the key off</td><td>This is correct. The gauges have no power.</td></tr>
+      <tr><td>~10 V for some seconds, then random values</td><td>At the start, the regulator is cold and its switch is closed. The voltage is steady: ~11.7 V feed × 150/(150+25) ≈ 10 V. Then the regulator gets hot and starts to switch on and off. A meter cannot show a steady number for this voltage.</td></tr>
     </table>
   </div>
 </div>
@@ -324,44 +329,46 @@ measures.</p>
 <div class="grid2">
   <div class="box">
     <h3>Why two wires, not one</h3>
-    <p>The gauge heater (25 Ω) and the sender sit in series. The feed voltage splits between them like water through
-    two pipes. The share that lands across the sender depends only on the two resistances:</p>
+    <p>The gauge heater (25 Ω) and the sender are in series. The feed voltage divides between them. The part of the
+    voltage across the sender depends only on the two resistances:</p>
     <p style="font-family:var(--mono)">k = V<sub>F</sub> ÷ V<sub>E</sub> = Rs ÷ (Rs + 25)</p>
-    <p>So the ESP32 reads both E and F at the same moment, throws away the moments when the regulator is off, and
-    computes <code>Rs = 25 × k ÷ (1 − k)</code>, then °C from the sender curve. The battery voltage and the pulsing
-    cancel out.</p>
+    <p>The ESP32 measures E and F at the same time. It ignores the moments when the regulator is off. It calculates
+    <code>Rs = 25 × k ÷ (1 − k)</code>, and then it gets °C from the sender curve. The battery voltage and the pulses
+    have no effect on the result.</p>
   </div>
   <div class="box">
     <h3>Why it doesn't upset the dash gauge</h3>
-    <p>Each tap goes through a 68 kΩ + 10 kΩ divider: thousands of times more resistance than the gauge circuit. It
-    draws well under 1% of the current, so the needle doesn't move.</p>
-    <p>The divider also shrinks the voltage by 7.8×, so 14 V becomes 1.8 V, safe for the ESP32 (max 3.3 V).</p>
-    <p><b>Pin A is wrong</b>: it's before the regulator, so it stays on while the sender wire drops to 0 V. Try "ESP32
-    tapped at pin A" above.</p>
+    <p>Each tap goes through a 68 kΩ + 10 kΩ divider. This resistance is thousands of times more than the gauge
+    circuit. The tap uses much less than 1% of the current, so the needle does not move.</p>
+    <p>The divider also decreases the voltage by 7.8 times. Thus 14 V becomes 1.8 V. This is safe for the ESP32
+    (maximum 3.3 V).</p>
+    <p><b>Do not use pin A.</b> Pin A is before the regulator. It stays on while the sender wire goes to 0 V. Click
+    "ESP32 tapped at pin A" above to see the result.</p>
   </div>
   <div class="box">
     <h3>Temperature vs sender resistance</h3>
     <table id="curve"><tr><th>°C</th><th>Rs (Ω)</th><th>k</th></tr></table>
-    <p class="sub">50 °C and 115 °C are from the FSM; the rest is a curve fitted through them. Calibrate on the truck
-    (step M4) before trusting alarms.</p>
+    <p class="sub">The 50 °C and 115 °C values come from the FSM. The other values come from a curve through these two
+    points. Calibrate on the truck (step M4) before you trust the alarms.</p>
   </div>
 </div>
 
-<h2>6. Words used</h2>
+<h2>6. Words in this page</h2>
 <table>
   <tr><th>Word</th><th>Meaning here</th></tr>
-  <tr><td>Sender</td><td>The temperature sensor in the engine. A resistor that changes with heat.</td></tr>
-  <tr><td>Gauge / receiver</td><td>The needle on the dash. The FSM calls it the "receiver gauge".</td></tr>
-  <tr><td>Bimetal</td><td>Two metals stuck together. Heat makes one grow more, so the strip bends.</td></tr>
-  <tr><td>NTC thermistor</td><td>Negative temperature coefficient: resistance goes <i>down</i> as temperature goes up.</td></tr>
-  <tr><td>E, F</td><td>The two terminals of the temperature gauge's heater. E = feed side, F = sender side.</td></tr>
-  <tr><td>Pin A</td><td>The cluster connector pin that feeds the regulator. Before the regulator, so not the one to tap.</td></tr>
-  <tr><td>Ground</td><td>The metal of the truck (body, engine block), which acts as the return wire back to the battery.</td></tr>
-  <tr><td>Divider</td><td>Two resistors that scale a voltage down by a fixed ratio.</td></tr>
-  <tr><td>Ratio k</td><td>Sender voltage ÷ feed voltage. Depends only on temperature, not on battery or pulsing.</td></tr>
+  <tr><td>Sender</td><td>The temperature sensor in the engine. It is a resistor that changes with temperature.</td></tr>
+  <tr><td>Gauge (receiver)</td><td>The temperature needle on the dash. The FSM uses the name "receiver gauge".</td></tr>
+  <tr><td>Bimetal</td><td>Two metals that are bonded together. Heat makes one metal expand more than the other, so the strip bends.</td></tr>
+  <tr><td>NTC thermistor</td><td>Negative temperature coefficient. The resistance <i>decreases</i> when the temperature increases.</td></tr>
+  <tr><td>E, F</td><td>The two terminals of the gauge heater. E is on the feed side. F is on the sender side.</td></tr>
+  <tr><td>Feed</td><td>The voltage at terminal E, from the regulator.</td></tr>
+  <tr><td>Pin A</td><td>The cluster connector pin that supplies the regulator. It is before the regulator. Do not connect a tap to it.</td></tr>
+  <tr><td>Ground</td><td>The metal of the truck (body and engine block). The current goes back to the battery through it.</td></tr>
+  <tr><td>Divider</td><td>Two resistors that make a voltage smaller by a constant ratio.</td></tr>
+  <tr><td>Ratio k</td><td>Sender wire voltage ÷ feed voltage. It depends only on the temperature. The battery voltage and the pulses have no effect on it.</td></tr>
 </table>
-<p class="sub" style="margin:14px 0 4px">Simplified model for learning: the regulator timing and needle response are illustrative. The
-resistances and the ratio maths are the real ones the firmware uses.</p>
+<p class="sub" style="margin:14px 0 4px">This page is a simple model for learning. The regulator timing and the needle
+speed are only examples. The resistances and the ratio calculation are the same as in the firmware.</p>
 </div>
 
 <script>
@@ -378,16 +385,16 @@ resistances and the ratio maths are the real ones the firmware uses.</p>
 
   // ---------- info + tour ----------
   const INFO = {
-    'c-bat': ['Battery (12 V)', 'One 12 V battery: 12.9 V with the engine off, about 14 V running (alternator charging). The minus side bolts to the truck body, so all the metal is "ground".'],
-    'c-key': ['Ignition switch / relay', 'Turns the gauges on with the key. Key off = no power = 0 V on every gauge wire (what you measured).'],
-    'c-fuse': ['ENGINE fuse 15 A', 'Protects the gauge circuit. On 24 V trucks the FSM shows a "Resister (24V)" after it to drop the voltage; on your 12 V truck there shouldn\'t be one.'],
-    'c-reg': ['Voltage regulator (inside the fuel gauge)', 'A bimetal switch with its own little heater. Cold: switch closed, full voltage passes. It heats, bends, opens; cools, closes again. It keeps clicking so the average is about 7 V whatever the battery does. Watch it flicker in the drawing.'],
-    'c-fuel': ['Fuel gauge branch', 'The same regulator also feeds the fuel gauge. That\'s why a dead regulator makes both needles misbehave together.'],
-    'c-gauge': ['Temperature gauge (E–F, 25 Ω)', 'A heater wire wound on a bimetal strip that moves the needle. More current = more heat = needle toward H. It responds slowly (seconds), so the regulator\'s pulses come out as a steady needle.'],
-    'c-wire': ['Sender wire (YG)', 'One wire, yellow-green, from gauge terminal F to the sender in the engine. This is where you spliced the multimeter. Its voltage switches on and off with the regulator.'],
-    'c-sender': ['Temperature sender', 'Thermistor in the cylinder head, tip in the coolant. Hot = low resistance = more current = needle up. FSM: 226 Ω at 50 °C, 26 Ω at 115 °C. Move the temperature slider and watch its value.'],
-    'c-gnd': ['Ground', 'The sender\'s body is grounded through the engine block; the battery minus is on the body. Current flows back through the metal. The ESP32 must share ground with the cluster.'],
-    'c-esp': ['ESP32 add-on', 'Two high-resistance taps: one on E (feed), one on F (sender). Each is scaled ÷7.8 by 68k/10k resistors. The ESP32 reads both together, keeps only the "regulator on" moments, and computes Rs = 25·k/(1−k).']
+    'c-bat': ['Battery (12 V)', 'One 12 V battery. It gives 12.9 V with the engine off and about 14 V with the engine running (the alternator charges it). The negative terminal connects to the truck body. Thus all the metal is "ground".'],
+    'c-key': ['Ignition switch / relay', 'The key turns the gauges on. With the key off, the gauges have no power. Each gauge wire has 0 V. You measured this.'],
+    'c-fuse': ['ENGINE fuse 15 A', 'The fuse protects the gauge circuit. On 24 V trucks, the FSM shows a "Resister (24V)" after the fuse. This resistor decreases the voltage. Your truck has a 12 V system, so it probably has no resistor.'],
+    'c-reg': ['Voltage regulator (inside the fuel gauge)', 'A bimetal switch with its own small heater. When it is cold, the switch is closed and the full voltage goes through. Then it gets hot, bends and opens. It cools and closes again. This cycle continues, so the average voltage stays at about 7 V at all battery voltages. Look at the switch in the drawing.'],
+    'c-fuel': ['Fuel gauge branch', 'The same regulator also supplies the fuel gauge. Thus, if the regulator fails, the two needles show incorrect values at the same time.'],
+    'c-gauge': ['Temperature gauge (E–F, 25 Ω)', 'A heater wire is around a bimetal strip. The strip moves the needle. More current makes more heat, and the needle moves toward H. The gauge is slow (seconds). Thus the needle stays steady while the regulator pulses.'],
+    'c-wire': ['Sender wire (YG)', 'One yellow-green wire goes from gauge terminal F to the sender in the engine. You connected the multimeter to this wire. Its voltage switches on and off with the regulator.'],
+    'c-sender': ['Temperature sender', 'A thermistor in the cylinder head. Its tip is in the coolant. Hot coolant gives low resistance, more current and a higher needle. FSM values: 226 Ω at 50 °C, 26 Ω at 115 °C. Move the temperature slider and look at the value.'],
+    'c-gnd': ['Ground', 'The sender body connects to ground through the engine block. The battery negative terminal connects to the body. The current goes back through the metal. Connect the ESP32 ground to the cluster ground.'],
+    'c-esp': ['ESP32 add-on', 'Two high-resistance taps: one on E (feed) and one on F (sender). The 68k/10k resistors divide each voltage by 7.8. The ESP32 measures the two voltages at the same time. It uses only the moments when the regulator is on. Then it calculates Rs = 25·k/(1−k).']
   };
   const TOUR = ['c-bat', 'c-key', 'c-fuse', 'c-reg', 'c-gauge', 'c-wire', 'c-sender', 'c-gnd', 'c-esp'];
   let step = 0;
@@ -521,20 +528,20 @@ resistances and the ratio maths are the real ones the firmware uses.</p>
         const recent = S.hist.filter(h => S.t - h[0] < 0.1);
         v = recent.reduce((a, h) => a + h[2], 0) / Math.max(1, recent.length);
         v = v.toFixed(2);
-        note = !S.key ? 'Key off: 0 V.' : (S.t - S.keyAt < WARMUP) ? 'Regulator still cold, switch closed: steady voltage.' :
-          'Regulator clicking: each reading catches a different moment, so the number jumps.';
+        note = !S.key ? 'Key off. The voltage is 0 V.' : (S.t - S.keyAt < WARMUP) ? 'The regulator is still cold and its switch is closed. The voltage is steady.' :
+          'The regulator switches on and off. Each reading occurs at a different moment, so the number changes.';
       } else if (S.dmmMode === 'Ru') {
         unit = 'Ω';
         v = S.fault === 'open' ? 'OL' : S.fault === 'short' ? '0.1' : m.rs.toFixed(1);
-        note = 'Wire unplugged, key off: the meter sees only the sender. This is the reading to trust.';
+        note = 'Wire disconnected and key off. The meter measures only the sender. You can trust this reading.';
       } else {
         unit = 'Ω';
         S.path = Math.max(3, Math.min(400, S.path + (Math.random() - 0.5) * 80));
         const other = RG + S.path;
         const par = 1 / (1 / Math.max(m.rs, 0.05) + 1 / other);
         v = S.key ? (par * (0.4 + Math.random() * 1.6)).toFixed(1) : par.toFixed(1);
-        note = S.key ? 'Key on: the circuit\'s own voltage swamps the meter. Meaningless.'
-                     : 'Wire connected: the meter also measures the path back through the gauge, regulator and fuel gauge, which keeps changing. Unreliable.';
+        note = S.key ? 'Key on. The circuit voltage causes errors in the meter. The reading has no meaning.'
+                     : 'Wire connected. The meter also measures a second path through the gauge, the regulator and the fuel gauge. This path changes. Do not trust this reading.';
       }
       $('dmm').textContent = v; $('dmmUnit').textContent = unit; $('dmmNote').textContent = note;
     }
