@@ -1,0 +1,31 @@
+# Boots, logs a normal reading, then heats the water probe through
+# WARN (35 C) and ALARM (40 C) and checks the serial verdict + buzzer pin.
+name: 'water_monitor smoke'
+version: 1
+author: 'maskeynihal'
+steps:
+  - wait-serial: 'Water: 24.0C'
+  - wait-serial: 'Buzzer: OFF'
+  - expect-pin:
+      part-id: uno
+      name: 3
+      value: 0
+
+  - set-control:
+      part-id: water
+      name: temperature
+      value: 37
+  - wait-serial: 'Water: 37.0C'
+  - wait-serial: 'Buzzer: BEEP'
+
+  - set-control:
+      part-id: water
+      name: temperature
+      value: 45
+  - wait-serial: 'Water: 45.0C'
+  - wait-serial: 'Buzzer: LOUD-CONT'
+  - delay: 200ms
+  - expect-pin:
+      part-id: uno
+      name: 3
+      value: 1

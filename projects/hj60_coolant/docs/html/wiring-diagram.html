@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hj60_coolant wiring (as built): ESP32-S3, USB power, mode B</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg-fb: #1b1f24; --mut-fb: #5b6470; --bd-fb: #c9ced6;
+    --fg: var(--foreground, var(--fg-fb));
+    --mut: var(--muted-foreground, var(--mut-fb));
+    --bd: var(--border, var(--bd-fb));
+    --cd: var(--card, rgba(127,127,127,.06));
+    --rad: var(--radius, 10px);
+    --mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    --n-3v3: #e5484d; --n-5v: #f76b15; --n-gnd: #8b8d98; --n-adc: #3e63dd; --n-out: #30a46c; --n-spi: #8e4ec6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg-fb: #e6e8eb; --mut-fb: #a3abb6; --bd-fb: #3a404a; }
+  }
+  body { font-family: var(--font-sans, system-ui, -apple-system, Segoe UI, sans-serif); color: var(--fg); margin: 0; line-height: 1.45; }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin: .2rem 0; }
+  h2 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
+  .sub { color: var(--mut); font-size: .9rem; }
+  .box { background: var(--cd); border: 1px solid var(--bd); border-radius: var(--rad); padding: 8px; }
+  .warn { border-left: 4px solid var(--n-3v3); padding: 8px 12px; background: var(--cd); border-radius: 6px; margin: 8px 0; font-size: .92rem; }
+  svg { width: 100%; height: auto; display: block; color: var(--fg); }
+  svg text { fill: var(--fg); font-family: inherit; font-size: 12px; }
+  svg .t { font-size: 13px; font-weight: 700; }
+  svg .s { font-size: 11px; fill: var(--mut); }
+  svg .m { font-family: var(--mono); font-size: 11px; }
+  svg .w { stroke: var(--fg); stroke-width: 1.6; fill: none; }
+  svg .blk { fill: none; stroke: var(--bd); stroke-width: 1.4; stroke-dasharray: 6 4; }
+  svg .part { fill: none; stroke: var(--fg); stroke-width: 1.6; }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  td, th { border-bottom: 1px solid var(--bd); padding: 5px 6px; text-align: left; vertical-align: top; }
+  th { color: var(--mut); font-weight: 600; }
+  code { font-family: var(--mono); font-size: .86em; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>hj60_coolant wiring (as built): ESP32-S3, USB power, sender mode B</h1>
+<p class="sub">Firmware 2026-11-01 (<code>senderMode = SENDER_MODE_B</code>, <code>batterySense = false</code>, USB power). Pin numbers are GPIO numbers.
+Pin positions follow the Espressif DevKitC-1 left header (J1). <b>Clone boards can have a different order: always
+read the GPIO label printed next to the pin.</b></p>
+<div class="warn"><b>No diodes or transistors in this version.</b> If the YG wire touches 12 V, GPIO7 can be damaged.
+Keep the wire well insulated, and add a Schottky diode (e.g. 1N5819) in series with GPIO7 later if you can.</div>
+<div class="warn"><b>Mode B disconnects the dash temperature gauge.</b> The YG wire goes to this circuit, not to gauge
+terminal F. Test on the bench with resistors first (table at the bottom). Never connect 12 V to any GPIO or to the
+3V3 pin.</div>
+
+<div class="box"><svg id="sch" viewBox="0 0 1320 975" role="img" aria-label="Wiring schematic"></svg></div>
+<p class="sub"><span class="sw" style="background:var(--n-3v3)"></span>3.3 V
+<span class="sw" style="background:var(--n-5v)"></span>5 V
+<span class="sw" style="background:var(--n-gnd)"></span>GND
+<span class="sw" style="background:var(--n-adc)"></span>analog input
+<span class="sw" style="background:var(--n-out)"></span>digital output / input
+<span class="sw" style="background:var(--n-spi)"></span>TFT SPI.
+Coloured tags with the same name are connected (net labels). Every GND is one common ground.</p>
+
+<h2>Wire list</h2>
+<p class="sub">Parts: 1 × 220 Ω, 2 × 5.6 kΩ, 2 × 12 kΩ, 1 push button, 1 active buzzer (3.3 V, under 20 mA), the TFT,
+a car USB adapter and a USB cable. No diodes or transistors. <b>Match the pairs:</b> measure your 5.6k and 12k
+resistors with the multimeter and use two 5.6k that read the same, and two 12k that read the same. The two dividers
+must be equal; the exact value matters less.</p>
+<table>
+  <tr><th>#</th><th>From</th><th>To</th><th>Notes</th></tr>
+  <tr><td colspan="4"><b>TFT</b></td></tr>
+  <tr><td>1</td><td>ESP32 3V3</td><td>TFT VCC</td><td>Check the module: many 3.5" ILI9488 boards accept 3.3–5 V on VCC.</td></tr>
+  <tr><td>2</td><td>ESP32 GND</td><td>TFT GND</td><td></td></tr>
+  <tr><td>3</td><td>GPIO10</td><td>TFT CS</td><td></td></tr>
+  <tr><td>4</td><td>GPIO8</td><td>TFT RESET</td><td></td></tr>
+  <tr><td>5</td><td>GPIO9</td><td>TFT DC/RS</td><td></td></tr>
+  <tr><td>6</td><td>GPIO11</td><td>TFT SDI (MOSI)</td><td></td></tr>
+  <tr><td>7</td><td>GPIO12</td><td>TFT SCK</td><td></td></tr>
+  <tr><td>8</td><td>GPIO18</td><td>TFT LED</td><td>If the LED pin draws more than ~20 mA (no transistor on the module), connect LED to 3V3 instead.</td></tr>
+  <tr><td>9</td><td>—</td><td>TFT SDO (MISO)</td><td>Not connected.</td></tr>
+  <tr><td colspan="4"><b>Temperature sender</b></td></tr>
+  <tr><td>10</td><td>GPIO7</td><td>220 Ω → node VS</td><td>GPIO7 powers the sender only while it measures (about 2 ms in each 100 ms).</td></tr>
+  <tr><td>11</td><td>Node VS</td><td>YG wire (unplugged from gauge terminal F)</td><td>Use a locking connector. Tape over the bare gauge F terminal.</td></tr>
+  <tr><td>12</td><td>GPIO7</td><td>5.6 kΩ → GPIO4 → 12 kΩ → GND</td><td>Measures the GPIO7 side of the 220 Ω.</td></tr>
+  <tr><td>13</td><td>Node VS</td><td>5.6 kΩ → GPIO5 → 12 kΩ → GND</td><td>Measures the sender side. Same values as wire 12. The firmware corrects for this divider being in parallel with the sender.</td></tr>
+  <tr><td colspan="4"><b>Button and buzzer</b></td></tr>
+  <tr><td>14</td><td>GPIO15</td><td>Push button → GND</td><td>Next screen. No resistor needed.</td></tr>
+  <tr><td>15</td><td>GPIO17</td><td>Buzzer +</td><td>3.3 V active buzzer under 20 mA. Optional: leave it out if you have none.</td></tr>
+  <tr><td>16</td><td>Buzzer −</td><td>GND</td><td></td></tr>
+  <tr><td colspan="4"><b>Power and ground</b></td></tr>
+  <tr><td>17</td><td>Car USB adapter (12 V socket, 2 A)</td><td>ESP32 USB port (the UART one)</td><td>Powers the ESP32 and the TFT.</td></tr>
+  <tr><td>18</td><td>ESP32 GND</td><td>Engine block, near the sender</td><td><b>Required.</b> The sender returns through the engine block. Without this wire the screen shows SENDER OPEN.</td></tr>
+</table>
+
+<h2>Bench test without the truck</h2>
+<p class="sub">Power the board from USB. Connect a resistor between node VS (the YG wire end) and GND in place of the
+sender, and join the ESP32 GND to the other end of the resistor. The BATT tile shows USB, because
+<code>batterySense</code> is off.</p>
+<table>
+  <tr><th>Resistor in place of the sender</th><th>Expected reading</th><th>State</th></tr>
+  <tr><td>150 Ω</td><td>~61 °C</td><td>OK (your engine-warm measurement)</td></tr>
+  <tr><td>56 Ω</td><td>~89 °C</td><td>OK</td></tr>
+  <tr><td>39 Ω</td><td>~101 °C</td><td>WARN, buzzer beeps</td></tr>
+  <tr><td>33 Ω</td><td>~107 °C</td><td>ALARM, buzzer steady, WATER screen</td></tr>
+  <tr><td>Nothing (open)</td><td>--</td><td>FAULT-OPEN, "SENDER OPEN"</td></tr>
+  <tr><td>Wire to GND (short)</td><td>--</td><td>FAULT-SHORT</td></tr>
+  <tr><td>Wire to 12 V through 1 kΩ</td><td>--</td><td>FAULT-BACKFEED, "WIRE HAS VOLTAGE"</td></tr>
+</table>
+<p class="sub">The FSM gives only two sender points, so these values come from a fitted curve. Use 1% resistors or
+better. Readings within a few °C are normal before the step M5 calibration (<code>ADC_OFFSET_MV</code>).</p>
+</div>
+
+<script>
+(() => {
+  const svg = document.getElementById('sch');
+  const NS = 'http://www.w3.org/2000/svg';
+  const C = { v3: 'var(--n-3v3)', v5: 'var(--n-5v)', gnd: 'var(--n-gnd)', adc: 'var(--n-adc)', out: 'var(--n-out)', spi: 'var(--n-spi)' };
+  function el(tag, attrs, text) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    svg.appendChild(e);
+    return e;
+  }
+  const wire = (pts, color) => el('polyline', { points: pts.map(p => p.join(',')).join(' '), class: 'w', style: color ? `stroke:${color}` : '' });
+  const txt = (x, y, s, cls, anchor) => el('text', { x, y, class: cls || '', 'text-anchor': anchor || 'start' }, s);
+  const dot = (x, y) => el('circle', { cx: x, cy: y, r: 3, fill: 'currentColor' });
+  // resistor (box) between two points, horizontal or vertical
+  function res(x1, y1, x2, y2, label, below) {
+    const h = y1 === y2, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    if (h) { wire([[x1, y1], [mx - 16, y1]]); wire([[mx + 16, y1], [x2, y2]]); el('rect', { x: mx - 16, y: my - 6, width: 32, height: 12, class: 'part' }); txt(mx, my + (below ? 22 : -10), label, 's', 'middle'); }
+    else { wire([[x1, y1], [x1, my - 16]]); wire([[x1, my + 16], [x2, y2]]); el('rect', { x: mx - 6, y: my - 16, width: 12, height: 32, class: 'part' }); txt(mx + 10, my + 4, label, 's'); }
+  }
+  function cap(x, y, label) {  // vertical, top at y, bottom ground
+    wire([[x, y], [x, y + 12]]); wire([[x - 9, y + 12], [x + 9, y + 12]]); wire([[x - 9, y + 17], [x + 9, y + 17]]); wire([[x, y + 17], [x, y + 28]]);
+    gnd(x, y + 28); txt(x + 12, y + 18, label, 's');
+  }
+  function gnd(x, y) { wire([[x - 9, y], [x + 9, y]], C.gnd); wire([[x - 5, y + 4], [x + 5, y + 4]], C.gnd); wire([[x - 2, y + 8], [x + 2, y + 8]], C.gnd); }
+  function diode(x1, y, x2, label, below) {  // horizontal, anode left
+    const mx = (x1 + x2) / 2;
+    wire([[x1, y], [mx - 8, y]]); wire([[mx + 8, y], [x2, y]]);
+    el('polygon', { points: `${mx - 8},${y - 7} ${mx - 8},${y + 7} ${mx + 6},${y}`, class: 'part' });
+    wire([[mx + 7, y - 7], [mx + 7, y + 7]]);
+    txt(mx, y + (below ? 20 : -11), label, 's', 'middle');
+  }
+  function net(x, y, name, color, anchor) {  // tag shape
+    const w = name.length * 7 + 12, x0 = anchor === 'end' ? x - w : x;
+    el('rect', { x: x0, y: y - 9, width: w, height: 18, rx: 4, fill: color, opacity: 0.18, stroke: color });
+    txt(x0 + w / 2, y + 4, name, '', 'middle');
+  }
+  function box(x, y, w, h, title, sub) {
+    el('rect', { x, y, width: w, height: h, rx: 4, class: 'part' });
+    txt(x + w / 2, y + 15, title, 't', 'middle');
+    if (sub) txt(x + w / 2, y + 29, sub, 's', 'middle');
+  }
+  function block(x, y, w, h, title) { el('rect', { x, y, width: w, height: h, rx: 10, class: 'blk' }); txt(x + 10, y + 18, title, 't'); }
+
+  // ================= Mode B sender circuit =================
+  block(10, 10, 470, 300, 'Mode B sender circuit (resistors only)');
+  net(20, 80, 'GPIO7', C.out);
+  wire([[74, 80], [110, 80]], C.out);
+  dot(110, 80);
+  res(110, 80, 230, 80, 'Rref 220 Ω', true);
+  dot(240, 80); wire([[230, 80], [240, 80]]);
+  txt(240, 68, 'VS', 'm', 'middle');
+  wire([[240, 80], [300, 80]]);
+  net(300, 80, 'YG wire → sender', C.adc);
+  txt(110, 68, 'VTOP', 'm', 'middle');
+  res(110, 80, 110, 160, 'R3 5.6k');
+  dot(110, 170); wire([[110, 160], [110, 170]]);
+  res(110, 170, 110, 250, 'R4 12k'); gnd(110, 250);
+  wire([[110, 170], [70, 170]], C.adc);
+  net(70, 170, 'GPIO4', C.adc, 'end');
+  res(240, 80, 240, 160, 'R5 5.6k');
+  dot(240, 170); wire([[240, 160], [240, 170]]);
+  res(240, 170, 240, 250, 'R6 12k'); gnd(240, 250);
+  wire([[240, 170], [290, 170]], C.adc);
+  net(290, 170, 'GPIO5', C.adc);
+  txt(330, 205, '3.2 V → 2.18 V at the pin', 's');
+  txt(330, 220, 'optional: 10–100 nF', 's');
+  txt(330, 235, 'GPIO4 → GND, GPIO5 → GND', 's');
+  txt(20, 280, 'R3 = R5 and R4 = R6: pick matching pairs with the meter. Sender body = engine ground.', 's');
+  txt(20, 296, 'ESP32 GND to the engine block (see Power and ground).', 's');
+
+  block(10, 320, 200, 120, 'Screen button');
+  net(20, 370, 'GPIO15', C.out);
+  wire([[88, 370], [110, 370]]);
+  dot(110, 370); dot(150, 370);
+  wire([[110, 370], [146, 356]]);
+  wire([[128, 348], [128, 340]]); wire([[118, 340], [138, 340]]);
+  wire([[150, 370], [180, 370], [180, 390]]); gnd(180, 390);
+  txt(20, 420, 'No resistor needed. Press = LOW.', 's');
+
+  block(220, 320, 260, 120, 'Buzzer (optional)');
+  net(230, 375, 'GPIO17', C.out);
+  wire([[288, 375], [320, 375]], C.out);
+  box(320, 355, 80, 40, 'BZ1', 'active 3.3 V');
+  txt(316, 368, '+', 's', 'end');
+  wire([[400, 375], [430, 375], [430, 395]]); gnd(430, 395);
+  txt(230, 420, 'Under 20 mA. A 5 V buzzer needs a transistor.', 's');
+
+  // ================= ESP32-S3 header J1 =================
+  const J1 = ['3V3', '3V3', 'RST', '4', '5', '6', '7', '15', '16', '17', '18', '8', '3', '46', '9', '10', '11', '12', '13', '14', '5V', 'GND'];
+  const HX = 700, HY = 74, HS = 30;
+  block(500, 10, 330, 750, 'ESP32-S3 DevKitC-1');
+  txt(750, 46, 'left header J1 (pin 1 at the top)', 's', 'middle');
+  el('rect', { x: HX, y: HY - 12, width: 100, height: J1.length * HS, rx: 6, class: 'part' });
+  const used = {
+    '3V3': ['3V3 (TFT VCC)', C.v3], '4': ['GPIO4 ← VTOP divider', C.adc], '5': ['GPIO5 ← VS divider', C.adc],
+    '6': ['free (battery, not used)', null], '7': ['GPIO7 → Rref (sender power)', C.out], '15': ['GPIO15 ← button', C.out],
+    '16': ['free (option C PWM)', null], '17': ['GPIO17 → buzzer +', C.out], '18': ['TFT LED', C.spi], '8': ['TFT RESET', C.spi],
+    '9': ['TFT DC/RS', C.spi], '10': ['TFT CS', C.spi], '11': ['TFT SDI (MOSI)', C.spi], '12': ['TFT SCK', C.spi],
+    '5V': ['5V (from USB)', C.v5], 'GND': ['GND (common)', C.gnd]
+  };
+  const pinY = {};
+  J1.forEach((p, i) => {
+    const y = HY + i * HS;
+    if (pinY[p] === undefined) pinY[p] = y;
+    el('circle', { cx: HX + 12, cy: y, r: 5, fill: used[p] && used[p][1] ? used[p][1] : 'none', stroke: 'currentColor' });
+    txt(HX + 24, y + 4, /^\d+$/.test(p) ? 'GPIO' + p : p, '');
+    const u = used[p];
+    if (u && p !== '18' && !['8', '9', '10', '11', '12'].includes(p) && !(p === '3V3' && i === 1)) {
+      if (u[1]) { wire([[HX, y], [HX - 8, y]], u[1]); }
+      txt(HX - 12, y + 4, u[0], 's', 'end');
+    }
+  });
+
+  // ================= TFT =================
+  const TX = 1060, TY = 60;
+  const TFT = [['VCC', '3V3', C.v3], ['GND', 'GND', C.gnd], ['CS', '10', C.spi], ['RESET', '8', C.spi], ['DC/RS', '9', C.spi],
+               ['SDI(MOSI)', '11', C.spi], ['SCK', '12', C.spi], ['LED', '18', C.spi], ['SDO(MISO)', null, null]];
+  block(850, 10, 460, 320, 'ILI9488 3.5" SPI TFT (480x320)');
+  el('rect', { x: TX, y: TY - 14, width: 130, height: TFT.length * 28 + 4, rx: 4, class: 'part' });
+  TFT.forEach(([name, pin, color], i) => {
+    const y = TY + i * 28;
+    txt(TX + 10, y + 4, name, 'm');
+    if (!pin) { txt(TX - 8, y + 4, 'not connected', 's', 'end'); return; }
+    const hy = pin === 'GND' ? HY + 21 * HS : pinY[pin];
+    const bx = 820 + i * 22;
+    wire([[HX + 100, hy], [bx, hy], [bx, y], [TX, y]], color);
+  });
+  txt(1200, 64, 'Check the VCC', 's');
+  txt(1200, 80, 'range of your module', 's');
+  txt(1200, 256, 'LED: if > 20 mA,', 's');
+  txt(1200, 272, 'wire it to 3V3', 's');
+
+  // ================= Power =================
+  block(10, 775, 1300, 190, 'Power and ground');
+  const py = 845;
+  box(30, py - 30, 170, 60, 'Car USB adapter', 'in the 12 V socket, 2 A');
+  wire([[200, py], [300, py]], C.v5);
+  txt(250, py - 8, 'USB cable', 's', 'middle');
+  box(300, py - 30, 220, 60, 'ESP32-S3 USB port', 'the UART one (/dev/cu.usbserial-*)');
+  wire([[520, py], [600, py]], C.v5);
+  net(600, py, '5V', C.v5);
+  txt(640, py + 4, '→ board 5V rail and its 3.3 V regulator → ESP32 and TFT', 's');
+  net(30, py + 85, 'GND', C.gnd);
+  wire([[72, py + 85], [300, py + 85]], C.gnd);
+  box(300, py + 60, 220, 50, 'Engine block', 'near the sender (or its mount)');
+  txt(540, py + 80, 'The sender returns through the engine block, so the ESP32 needs this', 's');
+  txt(540, py + 96, 'ground wire. A short wire to the block gives the smallest error.', 's');
+  txt(540, py + 112, 'The USB adapter ground is usually the car ground too. That is fine.', 's');
+})();
+</script>
+</body>
+</html>

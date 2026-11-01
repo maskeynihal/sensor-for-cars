@@ -1,0 +1,6 @@
+# Wokwi project for the water_monitor SIM copy (AVR Uno + SSD1306).
+# Build first: make sim-build P=water_monitor   (writes ../../../../build/...)
+[wokwi]
+version = 1
+firmware = '../../../../build/water_monitor/sim/water_monitor_sim.ino.hex'
+elf = '../../../../build/water_monitor/sim/water_monitor_sim.ino.elf'

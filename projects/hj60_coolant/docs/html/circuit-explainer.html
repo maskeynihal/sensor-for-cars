@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HJ60 temperature gauge circuit: interactive explainer</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg-fb: #1b1f24; --mut-fb: #5b6470; --bd-fb: #d0d5dc;
+    --fg: var(--foreground, var(--fg-fb));
+    --mut: var(--muted-foreground, var(--mut-fb));
+    --bd: var(--border, var(--bd-fb));
+    --cd: var(--card, rgba(127,127,127,.06));
+    --pri: var(--primary, #2563eb);
+    --hot: var(--destructive, #dc2626);
+    --warn: var(--warning, #d97706);
+    --ok: var(--success, #16a34a);
+    --live: var(--chart-1, #f59e0b);
+    --feed: var(--chart-2, #3b82f6);
+    --rad: var(--radius, 10px);
+    --mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg-fb: #e6e8eb; --mut-fb: #a3abb6; --bd-fb: #3a404a; }
+    body { background: #15181d; }
+  }
+  svg { color: var(--fg); }
+  body { font-family: var(--font-sans, system-ui, -apple-system, Segoe UI, sans-serif); color: var(--fg); margin: 0; line-height: 1.5; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.35rem; margin: .2rem 0 .3rem; }
+  h2 { font-size: 1.1rem; margin: 1.6rem 0 .5rem; }
+  h3 { font-size: .98rem; margin: .2rem 0 .3rem; }
+  p { margin: .35rem 0; }
+  .sub { color: var(--mut); font-size: .92rem; }
+  .box { background: var(--cd); border: 1px solid var(--bd); border-radius: var(--rad); padding: 16px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; }
+  button, select { font: inherit; font-size: .88rem; padding: 6px 11px; border-radius: 8px; border: 1px solid var(--bd); background: transparent; color: var(--fg); cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--pri); border-color: var(--pri); color: var(--primary-foreground, #fff); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--ring, var(--pri)); outline-offset: 2px; }
+  label { font-size: .88rem; }
+  input[type=range] { width: 220px; vertical-align: middle; }
+  svg text { font-family: inherit; fill: var(--fg); }
+  .wire { stroke: var(--mut); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .wire.live { stroke: var(--live); }
+  .flow { stroke: var(--live); stroke-width: 3; fill: none; stroke-dasharray: 4 12; opacity: 0; }
+  .comp { cursor: pointer; }
+  .comp rect.hit { fill: transparent; stroke: transparent; stroke-width: 2; rx: 8; }
+  .comp:hover rect.hit, .comp.hl rect.hit { stroke: var(--pri); fill: rgba(37,99,235,.07); }
+  .comp:focus { outline: none; }
+  .comp:focus-visible rect.hit { stroke: var(--pri); stroke-dasharray: 4 3; }
+  .area { fill: none; stroke: var(--bd); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .alabel { font-size: 12px; fill: var(--mut); }
+  .clabel { font-size: 12px; font-weight: 600; }
+  .small { font-size: 11px; fill: var(--mut); }
+  .tap { stroke: var(--feed); stroke-width: 2; stroke-dasharray: 5 4; fill: none; }
+  .tap.bad { stroke: var(--hot); }
+  .hidden { display: none; }
+  #circ .opt { display: none; }
+  #circ[data-mode="A"] .mA, #circ[data-mode="B"] .mB, #circ[data-mode="C"] .mC { display: inline; }
+  .flow.ex { stroke: var(--feed); }
+  #modeTxt { margin: 6px 0 2px; }
+  .readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .ro { border: 1px solid var(--bd); border-radius: var(--rad); padding: 8px 10px; }
+  .ro .k { font-size: .76rem; color: var(--mut); }
+  .ro .v { font-family: var(--mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .lcd { font-family: var(--mono); font-size: 1.9rem; letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 6px 12px; border-radius: 6px; background: #c9d3b4; color: #1a1f12; display: inline-block; min-width: 7.5ch; text-align: right; }
+  #info { min-height: 150px; }
+  #info h3 { color: var(--pri); }
+  .pill { display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--bd); color: var(--mut); }
+  .st-ok { color: var(--ok); } .st-warn { color: var(--warn); } .st-bad { color: var(--hot); }
+  canvas { width: 100%; height: 150px; display: block; border: 1px solid var(--bd); border-radius: var(--rad); }
+  .legend { font-size: .8rem; color: var(--mut); display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+  .sw { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 4px; }
+  table { border-collapse: collapse; font-size: .88rem; width: 100%; }
+  td, th { border-bottom: 1px solid var(--bd); padding: 5px 6px; text-align: left; vertical-align: top; }
+  th { color: var(--mut); font-weight: 600; }
+  code { font-family: var(--mono); font-size: .85em; }
+  .tour { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>HJ60 coolant temperature gauge: how the circuit works</h1>
+<p class="sub">Sources: Toyota FSM pages 13-73 and 13-74 (BJ, HJ series), and your measurements. The truck has a 12 V
+system with one battery. Click a part of the drawing, or use the guided tour.</p>
+
+<h2>1. The three parts</h2>
+<div class="grid2">
+  <div class="box">
+    <h3>The sender (in the engine)</h3>
+    <p>The sender is a brass plug in the cylinder head. Its tip is in the coolant. It contains a <b>thermistor</b>. A
+    thermistor is a resistor that changes its resistance with temperature.</p>
+    <p><b>When the coolant gets hotter, the resistance decreases.</b> FSM values: <b>226 Ω at 50 °C</b>,
+    <b>26 Ω at 115 °C</b>.</p>
+    <p>The sender has <b>one wire</b> (yellow-green, "YG"). The engine block is the other connection (ground). The sender
+    does not make a voltage. It only controls how much current can flow.</p>
+    <p class="sub">The name "sender" comes from its function: it sends the temperature to the dash, as a resistance.</p>
+  </div>
+  <div class="box">
+    <h3>The gauge (on the dash)</h3>
+    <p>The gauge is the needle on the dash. Behind the needle is a <b>bimetal strip</b>. A bimetal strip has two metals
+    that are bonded together. It bends when it gets hot. A small <b>heater wire</b> (25 Ω, terminals <b>E</b> and
+    <b>F</b>) is around the strip.</p>
+    <p>More current in the heater makes the strip hotter. The strip bends more, and the needle moves toward <b>H</b>.</p>
+    <p>The gauge is <b>slow by design</b>. It needs some seconds to get hot or cool. Thus it shows the average
+    current.</p>
+  </div>
+  <div class="box">
+    <h3>The voltage regulator (hidden inside the fuel gauge)</h3>
+    <p>The regulator is a small bimetal <b>switch</b>. It opens and closes again and again, like the flasher unit of
+    a turn signal.</p>
+    <p>The battery voltage is 12.9 V with the engine off and 14 V with the engine running. Without the regulator, the
+    needle would move up each time you start the engine.</p>
+    <p>The regulator keeps the <b>average</b> voltage at about 7 V at all battery voltages. The gauge shows the average
+    of the pulses, so the needle stays steady.</p>
+    <p class="sub">This is the cause of the changing numbers on your multimeter. The meter measured a voltage that
+    switches on and off.</p>
+  </div>
+</div>
+
+<h2>2. The circuit (interactive)</h2>
+<div class="controls" role="group" aria-label="Connection option">
+  <span class="sub">Connection:</span>
+  <button id="oA" aria-pressed="true">A: passive taps (current design)</button>
+  <button id="oB" aria-pressed="false">B: direct, gauge disconnected</button>
+  <button id="oC" aria-pressed="false">C: direct + ESP32 operates gauge</button>
+</div>
+<p class="sub" id="modeTxt"></p>
+<div class="controls" role="group" aria-label="Simulation controls">
+  <button id="btnKey" aria-pressed="false">Ignition: OFF</button>
+  <button id="btnEng" aria-pressed="false">Engine: not running</button>
+  <label>Coolant temperature <input id="temp" type="range" min="20" max="125" step="1" value="85" aria-describedby="tempOut"> <b id="tempOut">85 °C</b></label>
+</div>
+<div class="controls" role="group" aria-label="What if">
+  <span class="sub">What if:</span>
+  <button id="fNone" aria-pressed="true">Normal</button>
+  <button id="fOpen" aria-pressed="false">Sender wire broken</button>
+  <button id="fShort" aria-pressed="false">Sender wire shorted to ground</button>
+  <button id="fEsp" aria-pressed="false">ESP32 fails</button>
+  <button id="fTapA" aria-pressed="false">ESP32 tapped at pin A (wrong)</button>
+</div>
+
+<div class="box" style="padding:8px">
+<svg id="circ" data-mode="A" viewBox="0 0 900 470" role="img" aria-label="Temperature gauge circuit for the selected connection option">
+  <!-- areas -->
+  <rect class="area" x="250" y="14" width="455" height="210" rx="10"/>
+  <text class="alabel" x="262" y="32">Instrument cluster (behind the dash)</text>
+  <rect class="area" x="722" y="236" width="168" height="200" rx="10"/>
+  <text class="alabel" x="812" y="256">Engine</text>
+  <text class="alabel" x="812" y="270">(head)</text>
+  <rect class="area" x="372" y="300" width="330" height="160" rx="10"/>
+  <text class="alabel" x="384" y="452">Our add-on (new)</text>
+
+  <!-- common wires -->
+  <path id="w1" class="wire" d="M65 95 V60 H120"/>
+  <path id="w2" class="wire" d="M170 60 H190"/>
+  <path id="w3" class="wire" d="M232 60 H270 V120 H290"/>
+  <path id="w4" class="wire" d="M370 120 H440"/>
+  <path id="w6" class="wire" d="M800 350 V395"/>
+  <path id="wfuel" class="wire" d="M400 120 V190 H392"/>
+  <path id="wbat" class="wire" d="M65 165 V395"/>
+  <!-- option A: factory YG wire -->
+  <path id="w5" class="wire opt mA" d="M560 120 H800 V290"/>
+  <!-- option B: F open, sender to excitation -->
+  <path id="wBstub" class="wire opt mB" d="M560 120 H600"/>
+  <text class="small opt mB" x="604" y="124" style="fill:var(--hot)">✕ F open</text>
+  <path id="wB" class="wire opt mB" d="M645 318 V262 H800 V290"/>
+  <text class="small opt mB" x="652" y="282">YG wire to ESP32</text>
+  <!-- option C: relay in the YG wire -->
+  <path id="wC1" class="wire opt mC" d="M560 120 H640"/>
+  <path id="wC2" class="wire opt mC" d="M740 150 H800 V290"/>
+  <path id="cNC" class="wire opt mC" d="M640 120 L740 150"/>
+  <path id="cNO1" class="wire opt mC" d="M640 120 L660 200 V250 H525 V318"/>
+  <path id="cNO2" class="wire opt mC" d="M740 150 L720 200 V300 H645 V318"/>
+  <text class="small opt mC" x="748" y="142">YG</text>
+
+  <!-- current flow overlays -->
+  <path id="flowMain" class="flow" d="M65 95 V60 H120 M170 60 H190 M232 60 H270 V120 H290 M370 120 H440 M440 120 H560"/>
+  <path id="flowA" class="flow" d="M560 120 H800 V290 M800 350 V395"/>
+  <path id="flowCnc" class="flow" d="M560 120 H640 L740 150 H800 V290 M800 350 V395"/>
+  <path id="flowCno" class="flow" d="M560 120 H640 L660 200 V250 H525 V318"/>
+  <path id="flowExB" class="flow ex" d="M645 318 V262 H800 V290 M800 350 V395"/>
+  <path id="flowExC" class="flow ex" d="M645 318 V300 H720 V200 L740 150 H800 V290 M800 350 V395"/>
+
+  <!-- battery -->
+  <g class="comp" id="c-bat" tabindex="0" role="button" aria-label="Battery">
+    <rect class="hit" x="30" y="88" width="110" height="118"/>
+    <line x1="45" y1="105" x2="85" y2="105" stroke="currentColor" stroke-width="3"/>
+    <line x1="53" y1="117" x2="77" y2="117" stroke="currentColor" stroke-width="3"/>
+    <line x1="45" y1="129" x2="85" y2="129" stroke="currentColor" stroke-width="3"/>
+    <line x1="53" y1="141" x2="77" y2="141" stroke="currentColor" stroke-width="3"/>
+    <text class="clabel" x="76" y="186">Battery</text>
+    <text class="small" id="batV" x="76" y="200">12.9 V</text>
+    <path class="wire" d="M65 95 V105 M65 141 V165"/>
+  </g>
+
+  <!-- ignition -->
+  <g class="comp" id="c-key" tabindex="0" role="button" aria-label="Ignition switch and relay">
+    <rect class="hit" x="112" y="30" width="66" height="50"/>
+    <circle cx="122" cy="60" r="3.5" fill="currentColor"/><circle cx="168" cy="60" r="3.5" fill="currentColor"/>
+    <line id="keyBlade" x1="122" y1="60" x2="164" y2="42" stroke="currentColor" stroke-width="3"/>
+    <text class="clabel" x="112" y="92">Ignition</text>
+  </g>
+
+  <!-- fuse -->
+  <g class="comp" id="c-fuse" tabindex="0" role="button" aria-label="Engine fuse 15 A">
+    <rect class="hit" x="184" y="40" width="54" height="56"/>
+    <rect x="190" y="52" width="42" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M192 60 C202 50, 210 70, 230 60" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text class="clabel" x="186" y="88">Fuse</text>
+    <text class="small" x="186" y="101">15 A</text>
+  </g>
+
+  <!-- pin A marker -->
+  <circle cx="270" cy="120" r="4" fill="currentColor"/>
+  <text class="small" x="254" y="140">pin A</text>
+
+  <!-- regulator -->
+  <g class="comp" id="c-reg" tabindex="0" role="button" aria-label="Voltage regulator inside the fuel gauge">
+    <rect class="hit" x="282" y="78" width="96" height="86"/>
+    <rect x="290" y="92" width="80" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="308" cy="120" r="3" fill="currentColor"/><circle cx="352" cy="120" r="3" fill="currentColor"/>
+    <line id="regBlade" x1="308" y1="120" x2="350" y2="120" stroke="currentColor" stroke-width="3"/>
+    <path d="M300 136 h60" stroke="var(--hot)" stroke-width="2" stroke-dasharray="3 3"/>
+    <path d="M290 120 h18 M352 120 h18" stroke="currentColor" stroke-width="3"/>
+    <text class="clabel" x="292" y="86">Regulator</text>
+    <text class="small" id="regState" x="380" y="104">open</text>
+  </g>
+
+  <!-- fuel gauge branch -->
+  <circle cx="400" cy="120" r="4" fill="currentColor"/>
+  <g class="comp" id="c-fuel" tabindex="0" role="button" aria-label="Fuel gauge and fuel sender">
+    <rect class="hit" x="294" y="168" width="104" height="46"/>
+    <rect x="300" y="172" width="92" height="38" rx="5" fill="none" stroke="var(--mut)" stroke-width="1.5"/>
+    <text class="small" x="308" y="188">fuel gauge</text>
+    <text class="small" x="308" y="202">+ fuel sender</text>
+  </g>
+
+  <!-- gauge -->
+  <g class="comp" id="c-gauge" tabindex="0" role="button" aria-label="Temperature gauge: heater coil between E and F, bimetal needle">
+    <rect class="hit" x="430" y="30" width="190" height="112"/>
+    <path id="heater" d="M440 120 l10 -9 l10 18 l10 -18 l10 18 l10 -18 l10 18 l10 -18 l10 18 l10 -18 l10 18 l10 -9" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    <circle cx="440" cy="120" r="4" fill="currentColor"/><circle cx="560" cy="120" r="4" fill="currentColor"/>
+    <text class="clabel" x="433" y="144">E</text><text class="clabel" x="554" y="144">F</text>
+    <text class="small" x="474" y="144">heater 25 Ω</text>
+    <path d="M466 82 A34 34 0 0 1 534 82" fill="none" stroke="var(--bd)" stroke-width="6"/>
+    <path d="M523 58 A34 34 0 0 1 534 82" fill="none" stroke="var(--hot)" stroke-width="6"/>
+    <text class="small" x="456" y="96">C</text><text class="small" x="536" y="96">H</text>
+    <line id="needle" x1="500" y1="82" x2="500" y2="52" stroke="var(--hot)" stroke-width="2.5" stroke-linecap="round" transform="rotate(-70 500 82)"/>
+    <circle cx="500" cy="82" r="3.5" fill="currentColor"/>
+    <text class="clabel" x="544" y="58">Temp gauge</text>
+  </g>
+
+  <!-- YG wire label (A) -->
+  <g class="comp opt mA" id="c-wire" tabindex="0" role="button" aria-label="Sender wire, yellow-green">
+    <rect class="hit" x="600" y="104" width="120" height="32"/>
+    <text class="small" x="610" y="112">YG wire (to engine)</text>
+  </g>
+  <text class="small" x="806" y="282" id="brk" visibility="hidden" style="fill:var(--hot)">✕ broken</text>
+
+  <!-- relay (C) -->
+  <g class="comp opt mC" id="c-relay" tabindex="0" role="button" aria-label="Fail-safe relay">
+    <rect class="hit" x="632" y="82" width="116" height="126"/>
+    <rect x="640" y="100" width="100" height="100" rx="6" fill="none" stroke="var(--warn)" stroke-width="2"/>
+    <circle cx="640" cy="120" r="3.5" fill="currentColor"/><circle cx="740" cy="150" r="3.5" fill="currentColor"/>
+    <text class="clabel" x="641" y="94">Fail-safe relay</text>
+    <text class="small" id="relTxt" x="672" y="114">OFF</text>
+  </g>
+
+  <!-- sender -->
+  <g class="comp" id="c-sender" tabindex="0" role="button" aria-label="Coolant temperature sender">
+    <rect class="hit" x="760" y="270" width="104" height="96"/>
+    <rect x="785" y="290" width="30" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M790 340 L812 300 M806 300 h6 v6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <text class="clabel" x="822" y="300">Sender</text>
+    <text class="small" id="rsLbl" x="822" y="316">64 Ω</text>
+    <text class="small" x="822" y="332">NTC</text>
+  </g>
+  <line id="shortLine" x1="800" y1="270" x2="760" y2="270" stroke="var(--hot)" stroke-width="3" visibility="hidden"/>
+
+  <!-- grounds -->
+  <g class="comp" id="c-gnd" tabindex="0" role="button" aria-label="Ground">
+    <rect class="hit" x="40" y="388" width="50" height="34"/>
+    <rect class="hit" x="775" y="388" width="50" height="34"/>
+    <path d="M50 395 h30 M55 403 h20 M60 411 h10" stroke="currentColor" stroke-width="2"/>
+    <path d="M785 395 h30 M790 403 h20 M795 411 h10" stroke="currentColor" stroke-width="2"/>
+    <text class="small" x="34" y="434">body ground</text>
+    <text class="small" x="762" y="434">engine block</text>
+  </g>
+
+  <!-- option A taps -->
+  <path id="tapE" class="tap opt mA" d="M440 120 V250 H450 V330"/>
+  <path id="tapA" class="tap bad hidden" d="M270 120 V280 H450 V330"/>
+  <path id="tapF" class="tap opt mA" d="M560 120 V330"/>
+
+  <!-- option B/C: excitation block -->
+  <g class="comp opt mB mC" id="c-ref" tabindex="0" role="button" aria-label="Excitation: 3.3 V switch and 100 ohm reference resistor">
+    <rect class="hit" x="594" y="312" width="102" height="62"/>
+    <rect x="600" y="318" width="90" height="48" rx="4" fill="none" stroke="var(--feed)" stroke-width="1.5"/>
+    <text class="small" x="606" y="334">3.3 V switch</text>
+    <text class="small" x="606" y="349">+ Rref 100 Ω</text>
+    <text class="small" id="exTxt" x="606" y="362">off</text>
+    <path class="wire" d="M645 366 V380"/>
+  </g>
+  <!-- option C: gauge driver -->
+  <g class="comp opt mC" id="c-mos" tabindex="0" role="button" aria-label="Gauge driver: MOSFET and 20 ohm resistor">
+    <rect class="hit" x="474" y="312" width="102" height="62"/>
+    <rect x="480" y="318" width="90" height="48" rx="4" fill="none" stroke="var(--warn)" stroke-width="1.5"/>
+    <text class="small" x="486" y="334">MOSFET + 20 Ω</text>
+    <text class="small" x="486" y="349">to ground</text>
+    <text class="small" id="pwmTxt" x="486" y="362">PWM 0%</text>
+    <path class="wire" d="M525 366 V380"/>
+  </g>
+
+  <!-- ESP32 -->
+  <g class="comp" id="c-esp" tabindex="0" role="button" aria-label="ESP32">
+    <rect class="hit" x="400" y="320" width="290" height="110"/>
+    <g class="opt mA">
+      <rect x="430" y="330" width="40" height="38" rx="4" fill="none" stroke="var(--feed)" stroke-width="1.5"/>
+      <text class="small" x="433" y="346">68k</text><text class="small" x="433" y="361">10k</text>
+      <rect x="540" y="330" width="40" height="38" rx="4" fill="none" stroke="var(--feed)" stroke-width="1.5"/>
+      <text class="small" x="543" y="346">68k</text><text class="small" x="543" y="361">10k</text>
+      <text class="small" x="590" y="346">each tap ÷7.8</text>
+      <text class="small" x="590" y="361">(68k over 10k)</text>
+    </g>
+    <rect id="espBox" x="420" y="380" width="260" height="42" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text class="clabel" x="430" y="398">ESP32</text>
+    <text class="small" id="espState" x="480" y="398"></text>
+    <text class="small opt mA" x="430" y="414">GPIO4 = feed (E) · GPIO5 = sender (F)</text>
+    <text class="small opt mB" x="430" y="414">GPIO7 excite · GPIO4 Vtop · GPIO5 Vs</text>
+    <text class="small opt mC" x="430" y="414">B pins + GPIO16 = PWM · GPIO21 = relay</text>
+  </g>
+</svg>
+</div>
+
+<div class="grid2" style="margin-top:12px">
+  <div class="box" id="info" aria-live="polite">
+    <h3>Click a part</h3>
+    <p>Or use the guided tour. Turn the ignition on. Then you can see the current (orange) and the regulator switch.</p>
+  </div>
+  <div class="box">
+    <h3>Guided tour</h3>
+    <p class="sub">The tour follows the current from the battery to ground.</p>
+    <div class="tour">
+      <button id="tPrev">◀ Back</button>
+      <button id="tNext">Start tour ▶</button>
+      <span class="pill" id="tStep">0 / 9</span>
+    </div>
+  </div>
+</div>
+
+<div class="readouts" aria-live="off">
+  <div class="ro"><div class="k" id="lb0">–</div><div class="v" id="ro0">–</div></div>
+  <div class="ro"><div class="k" id="lb1">–</div><div class="v" id="ro1">–</div></div>
+  <div class="ro"><div class="k" id="lb2">–</div><div class="v" id="ro2">–</div></div>
+  <div class="ro"><div class="k" id="lb3">–</div><div class="v" id="ro3">–</div></div>
+  <div class="ro"><div class="k" id="lb4">–</div><div class="v" id="ro4">–</div></div>
+  <div class="ro"><div class="k" id="lb5">–</div><div class="v" id="ro5">–</div></div>
+</div>
+
+<h2>3. The voltage on the wires (scope view)</h2>
+<p class="sub">This view shows the last 6 seconds. <span id="scopeTxt"></span></p>
+<canvas id="scope" width="1000" height="150" aria-label="Oscilloscope trace for the selected option"></canvas>
+<div class="legend"><span><span class="sw" style="background:var(--feed)"></span><span id="lg1">feed E</span></span><span><span class="sw" style="background:var(--live)"></span><span id="lg2">sender wire F</span></span><span>The pulse timing is only an example. Step M2 measures the real timing.</span></div>
+
+<h2>4. Your multimeter, replayed</h2>
+<div class="grid2">
+  <div class="box">
+    <div class="controls" role="group" aria-label="Multimeter mode">
+      <button id="mV" aria-pressed="true">Volts at sender wire</button>
+      <button id="mRu" aria-pressed="false">Ohms, wire unplugged</button>
+      <button id="mRc" aria-pressed="false">Ohms, wire connected</button>
+    </div>
+    <div class="lcd" id="dmm">0.00</div> <span id="dmmUnit">V DC</span>
+    <p id="dmmNote" class="sub" style="margin-top:8px"></p>
+  </div>
+  <div class="box">
+    <h3>What you saw, and why</h3>
+    <table>
+      <tr><th>You measured</th><th>What it means</th></tr>
+      <tr><td>150 Ω, sender disconnected, engine warm</td><td>This reading is correct. On the FSM curve, it agrees with about <b>60 °C</b>. The sender is probably serviceable.</td></tr>
+      <tr><td>Ohms value changes with the wire connected</td><td>The meter also measures a second path through the gauge heater, the regulator and the fuel gauge. This is not a fault. <b>Measure ohms only with the wire disconnected and the key off.</b></td></tr>
+      <tr><td>0 V with the key off</td><td>This is correct. The gauges have no power.</td></tr>
+      <tr><td>~10 V for some seconds, then random values</td><td>At the start, the regulator is cold and its switch is closed. The voltage is steady: ~11.7 V feed × 150/(150+25) ≈ 10 V. Then the regulator gets hot and starts to switch on and off. A meter cannot show a steady number for this voltage.</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>5. How the ESP32 reads it (option A)</h2>
+<div class="grid2">
+  <div class="box">
+    <h3>Why two wires, not one</h3>
+    <p>The gauge heater (25 Ω) and the sender are in series. The feed voltage divides between them. The part of the
+    voltage across the sender depends only on the two resistances:</p>
+    <p style="font-family:var(--mono)">k = V<sub>F</sub> ÷ V<sub>E</sub> = Rs ÷ (Rs + 25)</p>
+    <p>The ESP32 measures E and F at the same time. It ignores the moments when the regulator is off. It calculates
+    <code>Rs = 25 × k ÷ (1 − k)</code>, and then it gets °C from the sender curve. The battery voltage and the pulses
+    have no effect on the result.</p>
+  </div>
+  <div class="box">
+    <h3>Why it doesn't upset the dash gauge</h3>
+    <p>Each tap goes through a 68 kΩ + 10 kΩ divider. This resistance is thousands of times more than the gauge
+    circuit. The tap uses much less than 1% of the current, so the needle does not move.</p>
+    <p>The divider also decreases the voltage by 7.8 times. Thus 14 V becomes 1.8 V. This is safe for the ESP32
+    (maximum 3.3 V).</p>
+    <p><b>Do not use pin A.</b> Pin A is before the regulator. It stays on while the sender wire goes to 0 V. Click
+    "ESP32 tapped at pin A" above to see the result.</p>
+  </div>
+  <div class="box">
+    <h3>Temperature vs sender resistance</h3>
+    <table id="curve"><tr><th>°C</th><th>Rs (Ω)</th><th>k</th></tr></table>
+    <p class="sub">The 50 °C and 115 °C values come from the FSM. The other values come from a curve through these two
+    points. Calibrate on the truck (step M4) before you trust the alarms.</p>
+  </div>
+</div>
+
+<h2>6. Other ways to connect (options A, B and C)</h2>
+<p class="sub">Select an option at the top of section 2. The drawing, the tour, the readouts, the scope and the
+multimeter change with the option. Click "ESP32 fails" to see what the driver gets.</p>
+<div class="grid2">
+  <div class="box">
+    <h3>Option B: how the ESP32 measures</h3>
+    <p>The ESP32 switches 3.3 V through a Schottky diode and a 100 Ω reference resistor to the sender. It measures the
+    voltage above the resistor (Vtop) and at the sender (Vs).</p>
+    <p style="font-family:var(--mono)">Rs = 100 × Vs ÷ (Vtop − Vs)</p>
+    <p>Near 100 °C, Vs is about 0.94 V and changes by about 19 mV for each °C. The dash gauge does not operate.</p>
+  </div>
+  <div class="box">
+    <h3>Option C: how the ESP32 operates the gauge</h3>
+    <p>The gauge needs current, not a voltage. A MOSFET and a 20 Ω resistor connect F to ground. The ESP32 switches
+    them on and off fast. The slow gauge uses the average heat.</p>
+    <p style="font-family:var(--mono)">D = ((25 + 20) ÷ (25 + Rs))²</p>
+    <p>At 100 °C, D is about 48%. A normally closed relay returns to the factory circuit if the ESP32 fails or finds a
+    sender fault.</p>
+  </div>
+</div>
+
+<h3 style="margin-top:14px">Comparison</h3>
+<table>
+  <tr><th></th><th>A: passive taps</th><th>B: direct, gauge disconnected</th><th>C: direct + ESP32 operates gauge</th></tr>
+  <tr><td>Dash gauge</td><td>Operates (factory)</td><td><b>Does not operate</b></td><td>Operates (from the ESP32)</td></tr>
+  <tr><td>If the ESP32 fails</td><td>Gauge operates</td><td><b>No temperature at all</b></td><td>Relay returns to the factory circuit</td></tr>
+  <tr><td>Signal near 100 °C</td><td>~10.5 mV/°C, pulsed</td><td>~19 mV/°C, steady</td><td>~19 mV/°C, steady</td></tr>
+  <tr><td>Extra parts</td><td>2 dividers</td><td>Rref, switch, diode</td><td>B parts + MOSFET, 20 Ω resistor, relay, watchdog</td></tr>
+  <tr><td>Main risk</td><td>Rg and ADC offset limit accuracy</td><td>Driver has no gauge</td><td>PWM load on the regulator is not tested</td></tr>
+  <tr><td>Use</td><td><b>First installation</b></td><td>Bench and calibration only</td><td>Upgrade, after a bench test</td></tr>
+</table>
+
+<h2>7. Words in this page</h2>
+<table>
+  <tr><th>Word</th><th>Meaning here</th></tr>
+  <tr><td>Sender</td><td>The temperature sensor in the engine. It is a resistor that changes with temperature.</td></tr>
+  <tr><td>Gauge (receiver)</td><td>The temperature needle on the dash. The FSM uses the name "receiver gauge".</td></tr>
+  <tr><td>Bimetal</td><td>Two metals that are bonded together. Heat makes one metal expand more than the other, so the strip bends.</td></tr>
+  <tr><td>NTC thermistor</td><td>Negative temperature coefficient. The resistance <i>decreases</i> when the temperature increases.</td></tr>
+  <tr><td>E, F</td><td>The two terminals of the gauge heater. E is on the feed side. F is on the sender side.</td></tr>
+  <tr><td>Feed</td><td>The voltage at terminal E, from the regulator.</td></tr>
+  <tr><td>Pin A</td><td>The cluster connector pin that supplies the regulator. It is before the regulator. Do not connect a tap to it.</td></tr>
+  <tr><td>Ground</td><td>The metal of the truck (body and engine block). The current goes back to the battery through it.</td></tr>
+  <tr><td>Divider</td><td>Two resistors that make a voltage smaller by a constant ratio.</td></tr>
+  <tr><td>PWM</td><td>Pulse-width modulation. A switch turns on and off fast. The duty (on time ÷ total time) sets the average.</td></tr>
+  <tr><td>Relay (normally closed)</td><td>A switch that a coil operates. With no coil power, the "normally closed" contacts connect.</td></tr>
+  <tr><td>Ratio k</td><td>Sender wire voltage ÷ feed voltage. It depends only on the temperature. The battery voltage and the pulses have no effect on it.</td></tr>
+</table>
+<p class="sub" style="margin:14px 0 4px">This page is a simple model for learning. The regulator timing and the needle
+speed are only examples. The resistances and the ratio calculation are the same as in the firmware.</p>
+</div>
+
+<script>
+(() => {
+  const RG = 25, R0 = 226, T0 = 323.15, R1 = 26, T1 = 388.15, RREF = 100, RMIN = 20;
+  const B = Math.log(R0 / R1) / (1 / T0 - 1 / T1);
+  const rsOf = c => R0 * Math.exp(B * (1 / (c + 273.15) - 1 / T0));
+  const cOf = r => 1 / (1 / T0 + Math.log(r / R0) / B) - 273.15;
+  const $ = id => document.getElementById(id);
+
+  const S = { mode: 'A', key: false, eng: false, temp: 85, fault: 'none', keyAt: 0, gaugeP: 0, regClosed: false,
+              exOn: false, hist: [], pairs: [], lastValid: 0, dmmMode: 'V', dmmT: 0, path: 40, t: 0,
+              cLatch: false, rsMeas: NaN, duty: 0, verdict: null };
+  const AVG_V = 7, REG_PERIOD = 1.4, WARMUP = 3, EX_PERIOD = 1.0, EX_ON = 0.4, VTOP = 3.0;
+
+  // ---------- info + tour ----------
+  const INFO = {
+    'c-bat': ['Battery (12 V)', 'One 12 V battery. It gives 12.9 V with the engine off and about 14 V with the engine running (the alternator charges it). The negative terminal connects to the truck body. Thus all the metal is "ground".'],
+    'c-key': ['Ignition switch / relay', 'The key turns the gauges on. With the key off, the gauges have no power. Each gauge wire has 0 V. You measured this. The ESP32 also gets its power through the ignition.'],
+    'c-fuse': ['ENGINE fuse 15 A', 'The fuse protects the gauge circuit. On 24 V trucks, the FSM shows a "Resister (24V)" after the fuse. This resistor decreases the voltage. Your truck has a 12 V system, so it probably has no resistor.'],
+    'c-reg': ['Voltage regulator (inside the fuel gauge)', 'A bimetal switch with its own small heater. When it is cold, the switch is closed and the full voltage goes through. Then it gets hot, bends and opens. It cools and closes again. This cycle continues, so the average voltage stays at about 7 V at all battery voltages. Look at the switch in the drawing.'],
+    'c-fuel': ['Fuel gauge branch', 'The same regulator also supplies the fuel gauge. Thus, if the regulator fails, the two needles show incorrect values at the same time.'],
+    'c-gauge': ['Temperature gauge (E–F, 25 Ω)', 'A heater wire is around a bimetal strip. The strip moves the needle. More current makes more heat, and the needle moves toward H. The gauge is slow (seconds). Thus the needle stays steady while the regulator pulses.'],
+    'c-wire': ['Sender wire (YG)', 'One yellow-green wire goes from gauge terminal F to the sender in the engine. You connected the multimeter to this wire. Its voltage switches on and off with the regulator.'],
+    'c-sender': ['Temperature sender', 'A thermistor in the cylinder head. Its tip is in the coolant. Hot coolant gives low resistance. FSM values: 226 Ω at 50 °C, 26 Ω at 115 °C. Move the temperature slider and look at the value.'],
+    'c-gnd': ['Ground', 'The sender body connects to ground through the engine block. The battery negative terminal connects to the body. The current goes back through the metal. Connect the ESP32 ground to the cluster ground.'],
+    'c-esp': ['ESP32 (option A)', 'Two high-resistance taps: one on E (feed) and one on F (sender). The 68k/10k resistors divide each voltage by 7.8. The ESP32 measures the two voltages at the same time. It uses only the moments when the regulator is on. Then it calculates Rs = 25·k/(1−k).'],
+    'c-ref': ['Excitation (options B and C)', 'A transistor switch connects 3.3 V through a Schottky diode and a 100 Ω reference resistor to the sender. The ESP32 switches it on only to measure. It measures the voltage above Rref (Vtop) and at the sender (Vs). Then it calculates Rs = 100·Vs/(Vtop−Vs). The diode stops current from a short to battery voltage.'],
+    'c-relay': ['Fail-safe relay (option C)', 'With no coil power, the normally closed contacts connect the sender to the gauge (factory circuit). When the ESP32 operates correctly, it energizes the relay. Then the sender goes to the ESP32, and gauge terminal F goes to the MOSFET driver. If the ESP32 fails, crashes or finds a sender fault, the relay releases.'],
+    'c-mos': ['Gauge driver (option C)', 'A MOSFET and a 20 Ω resistor connect terminal F to ground. The gauge needs current, not a voltage. The ESP32 switches the MOSFET on and off fast (PWM, about 1 kHz). The slow gauge uses the average heat. Duty D = ((25+20)/(25+Rs))².']
+  };
+  const INFO_MODE = {
+    B: { 'c-gauge': ['Temperature gauge (option B)', 'Terminal F is open. No current goes through the heater, so the needle stays below C. In option B, the dash gauge does not operate.'],
+         'c-esp': ['ESP32 (option B)', 'The ESP32 measures the sender directly with the excitation circuit. The signal is steady and about 19 mV for each °C near 100 °C. If the ESP32 fails, the driver has no coolant temperature.'] },
+    C: { 'c-gauge': ['Temperature gauge (option C)', 'When the relay is on, the ESP32 operates the gauge through the MOSFET driver. The PWM duty gives the same average heat as the real sender. When the relay is off, the sender operates the gauge (factory circuit).'],
+         'c-esp': ['ESP32 (option C)', 'The ESP32 measures the sender as in option B. Then it sets the PWM duty for the gauge. It energizes the relay only while it operates correctly. A sender fault or a crash releases the relay.'] }
+  };
+  const TOURS = {
+    A: ['c-bat', 'c-key', 'c-fuse', 'c-reg', 'c-gauge', 'c-wire', 'c-sender', 'c-gnd', 'c-esp'],
+    B: ['c-bat', 'c-key', 'c-reg', 'c-gauge', 'c-ref', 'c-sender', 'c-gnd', 'c-esp'],
+    C: ['c-bat', 'c-key', 'c-reg', 'c-gauge', 'c-relay', 'c-mos', 'c-ref', 'c-sender', 'c-esp']
+  };
+  let step = 0;
+  const infoFor = id => (INFO_MODE[S.mode] && INFO_MODE[S.mode][id]) || INFO[id];
+  function show(id) {
+    document.querySelectorAll('.comp').forEach(g => g.classList.toggle('hl', g.id === id));
+    const [h, p] = infoFor(id);
+    $('info').innerHTML = `<h3>${h}</h3><p>${p}</p>`;
+  }
+  document.querySelectorAll('.comp').forEach(g => {
+    g.addEventListener('click', () => show(g.id));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(g.id); } });
+  });
+  function tour(d) {
+    const T = TOURS[S.mode];
+    step = Math.min(T.length, Math.max(1, step + d));
+    show(T[step - 1]);
+    $('tStep').textContent = `${step} / ${T.length}`;
+    $('tNext').textContent = step >= T.length ? 'Done' : 'Next ▶';
+  }
+  $('tNext').onclick = () => tour(1);
+  $('tPrev').onclick = () => tour(-1);
+
+  // ---------- option texts ----------
+  const MODE_TXT = {
+    A: '<b>Option A (current design):</b> the sender stays connected to the gauge. The ESP32 only listens on E and F.',
+    B: '<b>Option B:</b> the YG wire goes to the ESP32. The ESP32 measures the sender directly. <b>The dash gauge does not operate.</b> Use B only on the bench.',
+    C: '<b>Option C:</b> the ESP32 measures the sender and operates the gauge through a MOSFET. A fail-safe relay returns to the factory circuit if the ESP32 fails.'
+  };
+  const LABELS = {
+    A: ['Sender resistance', 'Feed at E right now', 'Sender wire (F) right now', 'Gauge current right now', 'Ratio k = F ÷ E', 'ESP32 says'],
+    B: ['Sender resistance', 'Excitation Vtop', 'Sender voltage Vs', 'Gauge current', 'Ratio k = Vs ÷ Vtop', 'ESP32 says'],
+    C: ['Sender resistance', 'Feed at E right now', 'Relay / PWM duty', 'Gauge current (average)', 'Ratio k = Vs ÷ Vtop', 'ESP32 says']
+  };
+  const SCOPE = {
+    A: ['feed E', 'sender wire F', 'Blue = feed at E (regulator output). Orange = sender wire F (the wire where you connected the meter). The two voltages switch on and off at the same time. While they are on, their <b>ratio</b> does not change. Thus the ESP32 measures the ratio.', 15],
+    B: ['excitation Vtop', 'sender Vs', 'Blue = excitation voltage above Rref. Orange = sender voltage. The ESP32 switches the excitation on only to measure. The scale is 0–3.5 V. The regulator pulses do not affect this measurement.', 3.5],
+    C: ['feed E', 'terminal F (average over PWM)', 'Blue = feed at E. Orange = terminal F, as an average over the fast PWM. When the relay is off, orange is the factory sender wire again.', 15]
+  };
+  function setMode(m) {
+    S.mode = m; S.pairs = []; S.cLatch = false; S.rsMeas = NaN; S.lastValid = S.t; step = 0;
+    $('circ').dataset.mode = m;
+    ['oA', 'oB', 'oC'].forEach(id => $(id).setAttribute('aria-pressed', id === 'o' + m));
+    $('modeTxt').innerHTML = MODE_TXT[m];
+    LABELS[m].forEach((t, i) => $('lb' + i).textContent = t);
+    $('lg1').textContent = SCOPE[m][0]; $('lg2').textContent = SCOPE[m][1]; $('scopeTxt').innerHTML = SCOPE[m][2];
+    $('fTapA').style.display = m === 'A' ? '' : 'none';
+    if (m !== 'A' && S.fault === 'tapA') setFault('fNone');
+    $('tStep').textContent = `0 / ${TOURS[m].length}`; $('tNext').textContent = 'Start tour ▶';
+    $('info').innerHTML = '<h3>Click a part</h3><p>Or use the guided tour. Turn the ignition on. Then you can see the current (orange).</p>';
+    document.querySelectorAll('.comp').forEach(g => g.classList.remove('hl'));
+  }
+  ['A', 'B', 'C'].forEach(m => $('o' + m).onclick = () => setMode(m));
+
+  // ---------- controls ----------
+  $('btnKey').onclick = () => {
+    S.key = !S.key; S.keyAt = S.t; S.lastValid = S.t; S.pairs = []; S.cLatch = false;
+    $('btnKey').setAttribute('aria-pressed', S.key); $('btnKey').textContent = 'Ignition: ' + (S.key ? 'ON' : 'OFF');
+  };
+  $('btnEng').onclick = () => {
+    S.eng = !S.eng;
+    $('btnEng').setAttribute('aria-pressed', S.eng); $('btnEng').textContent = 'Engine: ' + (S.eng ? 'running' : 'not running');
+  };
+  $('temp').oninput = e => { S.temp = +e.target.value; $('tempOut').textContent = S.temp + ' °C'; };
+  const faults = { fNone: 'none', fOpen: 'open', fShort: 'short', fEsp: 'espfail', fTapA: 'tapA' };
+  function setFault(id) {
+    S.fault = faults[id]; S.pairs = []; S.cLatch = false; S.lastValid = S.t;
+    Object.keys(faults).forEach(o => $(o).setAttribute('aria-pressed', o === id));
+  }
+  Object.keys(faults).forEach(id => $(id).onclick = () => setFault(id));
+  const modes = { mV: 'V', mRu: 'Ru', mRc: 'Rc' };
+  Object.keys(modes).forEach(id => $(id).onclick = () => {
+    S.dmmMode = modes[id];
+    Object.keys(modes).forEach(o => $(o).setAttribute('aria-pressed', o === id));
+  });
+
+  [20, 50, 60, 82, 90, 100, 105, 110, 115, 120].forEach(c => {
+    const r = rsOf(c), tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c}${c === 50 || c === 115 ? ' (FSM)' : ''}</td><td>${r.toFixed(0)}</td><td>${(r / (r + RG)).toFixed(3)}</td>`;
+    $('curve').appendChild(tr);
+  });
+
+  // ---------- simulation ----------
+  const median = a => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+  function sim(dt) {
+    S.t += dt;
+    const bat = S.eng ? 14.0 : 12.9, von = bat - 1.2;
+    let rs = rsOf(S.temp);
+    if (S.fault === 'open') rs = 1e9;
+    if (S.fault === 'short') rs = 0.05;
+    const espAlive = S.key && S.fault !== 'espfail';
+
+    if (!S.key) S.regClosed = false;
+    else if (S.t - S.keyAt < WARMUP) S.regClosed = true;
+    else S.regClosed = ((S.t - S.keyAt - WARMUP) % REG_PERIOD) / REG_PERIOD < AVG_V / von;
+    const feed = S.regClosed ? von : 0;
+
+    const relayOn = S.mode === 'C' && espAlive && !S.cLatch;
+    const direct = (S.mode === 'B' || relayOn) && espAlive;  // sender wired to the excitation circuit
+    S.exOn = direct && ((S.t % EX_PERIOD) < EX_ON);
+    const vtop = S.exOn ? VTOP : 0;
+    const vsEx = vtop * rs / (rs + RREF);
+
+    // gauge heat
+    let p = 0, iNow = 0, fNode = 0, vsWire = 0;
+    if (S.mode === 'A' || (S.mode === 'C' && !relayOn)) {
+      iNow = feed / (RG + rs); p = iNow * iNow * RG; fNode = feed * rs / (rs + RG); vsWire = fNode;
+    } else if (S.mode === 'B') {
+      iNow = 0; p = 0; fNode = feed; vsWire = vsEx;
+    } else {
+      S.duty = isNaN(S.rsMeas) ? 0 : Math.min(1, Math.pow((RG + RMIN) / (RG + S.rsMeas), 2));
+      const ion = feed / (RG + RMIN);
+      iNow = S.duty * ion; p = S.duty * ion * ion * RG; fNode = feed * (1 - S.duty * RG / (RG + RMIN)); vsWire = vsEx;
+    }
+    S.gaugeP += (p - S.gaugeP) * Math.min(1, dt / 6);
+
+    // ESP32 samples
+    if (espAlive) {
+      if (S.mode === 'A') {
+        const feedTap = S.fault === 'tapA' ? bat - 0.3 : feed;
+        if (feedTap > 3) { S.pairs.push([S.t, fNode / feedTap]); S.lastValid = S.t; }
+      } else if (S.exOn) { S.pairs.push([S.t, vsEx / vtop]); S.lastValid = S.t; }
+    }
+    S.pairs = S.pairs.filter(q => S.t - q[0] < 1);
+
+    const s1 = S.mode === 'B' ? vtop : feed;
+    const s2 = S.mode === 'B' ? vsEx : fNode;
+    S.hist.push([S.t, s1, s2, vsWire]);
+    S.hist = S.hist.filter(h => S.t - h[0] < 6);
+    return { bat, von, rs, feed, iNow, vtop, vsEx, fNode, espAlive, relayOn };
+  }
+
+  function verdict(m) {
+    const rr = S.mode === 'A' ? RG : RREF;
+    if (!S.key) return ['off (no power)', ''];
+    if (!m.espAlive) return [S.mode === 'B' ? 'FAILED: NO TEMPERATURE' : 'FAILED (no reading)', 'st-bad'];
+    if (S.mode === 'C' && S.cLatch) return ['FAULT: sender (relay released)', 'st-bad'];
+    if (S.pairs.length < 3) return S.t - S.lastValid > 5 ? ['FAULT: no feed', 'st-bad'] : ['holding last value', ''];
+    const k = median(S.pairs.map(q => q[1]));
+    const rs = rr * k / (1 - k);
+    if (k >= 0.998) { S.rsMeas = NaN; if (S.mode === 'C') S.cLatch = true; return ['FAULT: sender open', 'st-bad']; }
+    if (rs < 5) { S.rsMeas = NaN; if (S.mode === 'C') S.cLatch = true;
+      return [S.fault === 'tapA' ? 'FAULT: short (wrong tap!)' : 'FAULT: sender short', 'st-bad']; }
+    S.rsMeas = rs;
+    const c = cOf(rs);
+    let t = c.toFixed(1) + ' °C ' + (c >= 105 ? 'ALARM' : c >= 100 ? 'WARN' : 'OK');
+    let cls = c >= 105 ? 'st-bad' : c >= 100 ? 'st-warn' : 'st-ok';
+    if (S.fault === 'tapA') { t += ' (wrong: pin A)'; cls = 'st-bad'; }
+    return [t, cls];
+  }
+
+  const LIVE = {
+    A: m => ({ w5: m.feed > 0, w4: m.feed > 0, w6: m.feed > 0 }),
+    B: m => ({ w4: m.feed > 0, wBstub: m.feed > 0, wB: S.exOn, w6: S.exOn }),
+    C: m => m.relayOn ? { w4: m.feed > 0, wC1: m.feed > 0, cNO1: m.feed > 0, cNO2: S.exOn, wC2: S.exOn, w6: S.exOn }
+                      : { w4: m.feed > 0, wC1: m.feed > 0, cNC: m.feed > 0, wC2: m.feed > 0, w6: m.feed > 0 }
+  };
+  const WIRES = ['w4', 'w5', 'w6', 'wBstub', 'wB', 'wC1', 'wC2', 'cNC', 'cNO1', 'cNO2'];
+
+  function render(m) {
+    $('batV').textContent = m.bat.toFixed(1) + ' V';
+    ['w1', 'w2', 'w3'].forEach(w => $(w).classList.toggle('live', S.key));
+    $('wfuel').classList.toggle('live', m.feed > 0);
+    const live = LIVE[S.mode](m);
+    WIRES.forEach(w => $(w).classList.toggle('live', !!live[w]));
+    $('keyBlade').setAttribute('x2', S.key ? 168 : 164); $('keyBlade').setAttribute('y2', S.key ? 60 : 42);
+    $('regBlade').setAttribute('y2', S.regClosed ? 120 : 104);
+    $('regState').textContent = !S.key ? 'off' : S.regClosed ? 'closed (on)' : 'open (off)';
+
+    // relay drawing
+    $('cNC').style.display = S.mode === 'C' && !m.relayOn ? '' : 'none';
+    ['cNO1', 'cNO2'].forEach(id => $(id).style.display = S.mode === 'C' && m.relayOn ? '' : 'none');
+    $('relTxt').textContent = m.relayOn ? 'ON (ESP32)' : 'OFF (factory)';
+    $('exTxt').textContent = S.exOn ? 'ON (measuring)' : 'off';
+    $('pwmTxt').textContent = 'PWM ' + (m.relayOn ? (S.duty * 100).toFixed(1) : '0') + '%';
+
+    // flows
+    const sOpen = S.fault === 'open', gaugeLoop = m.feed > 0 && !sOpen;
+    const fl = {
+      flowMain: S.mode !== 'B' && m.feed > 0 && (S.mode === 'A' ? !sOpen : (m.relayOn ? S.duty > 0 : !sOpen)),
+      flowA: S.mode === 'A' && gaugeLoop,
+      flowCnc: S.mode === 'C' && !m.relayOn && gaugeLoop,
+      flowCno: S.mode === 'C' && m.relayOn && m.feed > 0 && S.duty > 0,
+      flowExB: S.mode === 'B' && S.exOn && !sOpen,
+      flowExC: S.mode === 'C' && m.relayOn && S.exOn && !sOpen
+    };
+    Object.keys(fl).forEach(id => {
+      const e = $(id); e.style.opacity = fl[id] ? 1 : 0;
+      e.style.strokeDashoffset = -(S.t * (id.startsWith('flowEx') ? 60 : 40 + Math.min(360, m.iNow * 900)));
+    });
+
+    $('brk').setAttribute('visibility', sOpen ? 'visible' : 'hidden');
+    $('shortLine').setAttribute('visibility', S.fault === 'short' ? 'visible' : 'hidden');
+    $('tapA').classList.toggle('hidden', !(S.mode === 'A' && S.fault === 'tapA'));
+    $('tapE').style.display = S.mode === 'A' && S.fault === 'tapA' ? 'none' : '';
+    $('rsLbl').textContent = sOpen ? 'open' : S.fault === 'short' ? '≈0 Ω' : m.rs.toFixed(0) + ' Ω';
+    $('espBox').setAttribute('stroke', S.key && !m.espAlive ? 'var(--hot)' : 'currentColor');
+    $('espState').textContent = !S.key ? '(off)' : m.espAlive ? '' : 'FAILED';
+
+    // needle from average heater power
+    const ieq = Math.sqrt(S.gaugeP / RG);
+    const iC = Math.sqrt(AVG_V * m.von) / (rsOf(50) + RG), iH = Math.sqrt(AVG_V * m.von) / (rsOf(115) + RG);
+    const f = Math.max(-0.06, Math.min(1.08, (ieq - iC) / (iH - iC)));
+    $('needle').setAttribute('transform', `rotate(${-70 + 140 * Math.max(-0.06, f)} 500 82)`);
+
+    // readouts
+    $('ro0').textContent = sOpen ? 'open circuit' : m.rs.toFixed(1) + ' Ω';
+    if (S.mode === 'A') {
+      $('ro1').textContent = m.feed.toFixed(1) + ' V'; $('ro2').textContent = m.fNode.toFixed(1) + ' V';
+      $('ro4').textContent = m.feed > 0 ? (m.fNode / m.feed).toFixed(3) : '— (off)';
+    } else if (S.mode === 'B') {
+      $('ro1').textContent = m.vtop.toFixed(2) + ' V'; $('ro2').textContent = m.vsEx.toFixed(3) + ' V';
+      $('ro4').textContent = m.vtop > 0 ? (m.vsEx / m.vtop).toFixed(3) : '— (excitation off)';
+    } else {
+      $('ro1').textContent = m.feed.toFixed(1) + ' V';
+      $('ro2').textContent = m.relayOn ? 'ON, ' + (S.duty * 100).toFixed(1) + ' %' : 'OFF (factory)';
+      $('ro4').textContent = m.relayOn ? (m.vtop > 0 ? (m.vsEx / m.vtop).toFixed(3) : '— (excitation off)') : '— (relay off)';
+    }
+    $('ro3').textContent = S.mode === 'B' ? '0 mA (F open)' : (m.iNow * 1000).toFixed(0) + ' mA';
+    const [txt, cls] = verdict(m);
+    $('ro5').textContent = txt; $('ro5').className = 'v ' + cls;
+
+    // multimeter (~3 readings per second)
+    if (S.t - S.dmmT > 0.33) {
+      S.dmmT = S.t;
+      const directWire = S.mode === 'B' || m.relayOn;
+      let v, unit = 'V DC', note;
+      if (S.dmmMode === 'V') {
+        const recent = S.hist.filter(h => S.t - h[0] < 0.1);
+        v = (recent.reduce((a, h) => a + h[3], 0) / Math.max(1, recent.length)).toFixed(2);
+        if (!S.key) note = 'Key off. The voltage is 0 V.';
+        else if (directWire) note = 'The ESP32 switches the excitation on and off. Each reading occurs at a different moment, so the number changes. The values are small (below 3 V).';
+        else note = (S.t - S.keyAt < WARMUP) ? 'The regulator is still cold and its switch is closed. The voltage is steady.'
+          : 'The regulator switches on and off. Each reading occurs at a different moment, so the number changes.';
+      } else if (S.dmmMode === 'Ru') {
+        unit = 'Ω';
+        v = sOpen ? 'OL' : S.fault === 'short' ? '0.1' : m.rs.toFixed(1);
+        note = 'Wire disconnected and key off. The meter measures only the sender. You can trust this reading.';
+      } else {
+        unit = 'Ω';
+        S.path = Math.max(3, Math.min(400, S.path + (Math.random() - 0.5) * 80));
+        const other = (directWire ? RREF : RG) + S.path;
+        const par = 1 / (1 / Math.max(m.rs, 0.05) + 1 / other);
+        v = S.key ? (par * (0.4 + Math.random() * 1.6)).toFixed(1) : par.toFixed(1);
+        note = S.key ? 'Key on. The circuit voltage causes errors in the meter. The reading has no meaning.'
+          : directWire ? 'Wire connected to the ESP32 circuit. The meter also measures the excitation circuit. Do not trust this reading.'
+          : 'Wire connected. The meter also measures a second path through the gauge, the regulator and the fuel gauge. This path changes. Do not trust this reading.';
+      }
+      $('dmm').textContent = v; $('dmmUnit').textContent = unit; $('dmmNote').textContent = note;
+    }
+    drawScope();
+  }
+
+  // ---------- scope ----------
+  const cv = $('scope'), cx = cv.getContext('2d');
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function drawScope() {
+    const W = cv.width, H = cv.height, vmax = SCOPE[S.mode][3];
+    cx.clearRect(0, 0, W, H);
+    cx.strokeStyle = css('--bd') || '#ccc'; cx.lineWidth = 1;
+    cx.fillStyle = css('--mut') || '#777'; cx.font = '20px system-ui';
+    const ticks = vmax > 5 ? [0, 5, 10, 15] : [0, 1, 2, 3];
+    ticks.forEach(v => { const y = H - 8 - (H - 16) * v / vmax; cx.beginPath(); cx.moveTo(40, y); cx.lineTo(W, y); cx.stroke(); cx.fillText(v + 'V', 0, y + 6); });
+    const plot = (idx, color) => {
+      cx.strokeStyle = color; cx.lineWidth = 3; cx.beginPath();
+      S.hist.forEach((h, n) => {
+        const x = 40 + (W - 40) * (1 - (S.t - h[0]) / 6), y = H - 8 - (H - 16) * Math.min(h[idx], vmax) / vmax;
+        n ? cx.lineTo(x, y) : cx.moveTo(x, y);
+      });
+      cx.stroke();
+    };
+    plot(1, css('--feed') || '#3b82f6');
+    plot(2, css('--live') || '#f59e0b');
+  }
+
+  setMode('A');
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    render(sim(dt));
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,2 +1,10 @@
 .DS_Store
-.kiro/
+# Kiro: keep steering (agent rules), ignore local settings
+.kiro/settings/
+
+# local secrets (never commit). Template: .env.example
+.env
+.hashnode.env
+
+# build outputs (arduino-cli, native tests, wokwi logs/screenshots)
+build/

@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "author": "maskeynihal",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-devkitc-1",
+      "id": "mcu",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd",
+      "top": -260,
+      "left": 120,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "chip-hj60-sender",
+      "id": "sender",
+      "top": 40,
+      "left": 300,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "batt",
+      "top": 140,
+      "left": 260,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn",
+      "top": 160,
+      "left": 380,
+      "attrs": {
+        "color": "orange"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": -60,
+      "left": -110,
+      "attrs": {
+        "volume": "0.1"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "mcu:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "mcu:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "lcd:VCC",
+      "mcu:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd:GND",
+      "mcu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd:CS",
+      "mcu:10",
+      "orange",
+      []
+    ],
+    [
+      "lcd:D/C",
+      "mcu:9",
+      "green",
+      []
+    ],
+    [
+      "lcd:RST",
+      "mcu:8",
+      "white",
+      []
+    ],
+    [
+      "lcd:MOSI",
+      "mcu:11",
+      "blue",
+      []
+    ],
+    [
+      "lcd:SCK",
+      "mcu:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd:LED",
+      "mcu:18",
+      "purple",
+      []
+    ],
+    [
+      "batt:GND",
+      "mcu:GND.2",
+      "black",
+      []
+    ],
+    [
+      "batt:VCC",
+      "mcu:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "batt:SIG",
+      "mcu:6",
+      "cyan",
+      []
+    ],
+    [
+      "btn:1.l",
+      "mcu:15",
+      "orange",
+      []
+    ],
+    [
+      "btn:2.l",
+      "mcu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "buzzer:1",
+      "mcu:GND.2",
+      "black",
+      []
+    ],
+    [
+      "buzzer:2",
+      "mcu:17",
+      "purple",
+      []
+    ],
+    [
+      "sender:EN",
+      "mcu:7",
+      "red",
+      []
+    ],
+    [
+      "sender:VTOP",
+      "mcu:4",
+      "orange",
+      []
+    ],
+    [
+      "sender:VS",
+      "mcu:5",
+      "green",
+      []
+    ],
+    [
+      "sender:GND",
+      "mcu:GND.2",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}

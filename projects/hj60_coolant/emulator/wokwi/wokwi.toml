@@ -1,0 +1,12 @@
+# Wokwi project for the hj60_coolant SIM copy (ESP32 DevKit C v4).
+# Build first: make build-sim P=hj60_coolant
+[wokwi]
+version = 1
+firmware = '../../../../build/hj60_coolant/sim/hj60_coolant_sim.ino.merged.bin'
+elf = '../../../../build/hj60_coolant/sim/hj60_coolant_sim.ino.elf'
+
+# Sim-only custom chip for the mode B sender circuit (docs/adr/0011).
+# Rebuild: wokwi-cli chip compile chips/hj60-sender.chip.c -o chips/hj60-sender.chip.wasm
+[[chip]]
+name = 'hj60-sender'
+binary = 'chips/hj60-sender.chip.wasm'

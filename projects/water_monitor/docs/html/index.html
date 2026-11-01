@@ -180,7 +180,7 @@
         <span class="pill">DS18B20 + DHT22</span>
         <span class="pill">active buzzer</span>
       </div>
-      <div class="note">Firmware: <code>sketches/water_monitor/water_monitor.ino</code>.
+      <div class="note">Firmware: <code>projects/water_monitor/firmware/water_monitor/water_monitor.ino</code>.
       This is the interactive version of <a href="../markdown/README.md">README.md</a> — same content, click-through for newcomers.</div>
     </header>
 
@@ -560,7 +560,7 @@ arduino-cli core install arduino:renesas_uno</pre></div>
 arduino-cli compile \
   --fqbn arduino:renesas_uno:unor4wifi \
   --libraries ./libraries \
-  sketches/water_monitor
+  projects/water_monitor/firmware/water_monitor
 
 # find your board's port (Port column; e.g. /dev/cu.usbmodemXXXX)
 arduino-cli board list
@@ -570,7 +570,7 @@ arduino-cli upload \
   --fqbn arduino:renesas_uno:unor4wifi \
   --libraries ./libraries \
   -p /dev/cu.usbmodemXXXX \
-  sketches/water_monitor</pre></div>
+  projects/water_monitor/firmware/water_monitor</pre></div>
       <p>Watch the Serial output from the CLI (9600 baud, matches the sketch):</p>
       <div class="codeblock"><button class="copybtn">Copy</button><pre>arduino-cli monitor -p /dev/cu.usbmodemXXXX -c baudrate=9600</pre></div>
     </section>
@@ -579,10 +579,10 @@ arduino-cli upload \
       <h3><span class="n">10</span> Bring-up (step by step)</h3>
       <p>Click each step as you finish it — your progress shows in the sidebar and is saved in this browser.</p>
       <ul class="steps" id="steps">
-        <li><div class="box"></div><div class="txt"><strong>Blink test</strong> — upload <code>sketches/blink_led/blink_led.ino</code>. The on-board LED path (D8) proves the toolchain and the board.</div></li>
-        <li><div class="box"></div><div class="txt"><strong>Find the OLED</strong> — upload <code>sketches/i2c_address_finder/i2c_address_finder.ino</code>, open Serial at 115200. It should report <code>0x3C</code>. If it reports something else, change <code>SCREEN_ADDRESS</code>.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Blink test</strong> — upload <code>projects/_utilities/blink_led/blink_led.ino</code>. The on-board LED path (D8) proves the toolchain and the board.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Find the OLED</strong> — upload <code>projects/_utilities/i2c_address_finder/i2c_address_finder.ino</code>, open Serial at 115200. It should report <code>0x3C</code>. If it reports something else, change <code>SCREEN_ADDRESS</code>.</div></li>
         <li><div class="box"></div><div class="txt"><strong>Wire the sensors</strong> per the pin map above. Double-check the DS18B20 4.7 kΩ pull-up.</div></li>
-        <li><div class="box"></div><div class="txt"><strong>Upload</strong> <code>sketches/water_monitor/water_monitor.ino</code>. Open Serial at <strong>9600</strong>.</div></li>
+        <li><div class="box"></div><div class="txt"><strong>Upload</strong> <code>projects/water_monitor/firmware/water_monitor/water_monitor.ino</code>. Open Serial at <strong>9600</strong>.</div></li>
         <li><div class="box"></div><div class="txt"><strong>Verify</strong>: the OLED shows the truck + readouts; Serial prints the status line.</div></li>
         <li><div class="box"></div><div class="txt"><strong>Test the buzzer</strong>: warm the water probe past 35 °C (beeps), then past 40 °C (steady).</div></li>
       </ul>

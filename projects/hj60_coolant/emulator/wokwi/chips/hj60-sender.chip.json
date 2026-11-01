@@ -1,0 +1,10 @@
+{
+  "name": "HJ60 sender (mode B sim)",
+  "author": "sensor-for-cars",
+  "pins": ["EN", "VTOP", "VS", "GND"],
+  "controls": [
+    { "id": "temperature", "label": "Coolant temperature (C)", "type": "range", "min": 20, "max": 150, "step": 1 },
+    { "id": "open", "label": "Sender wire open (0/1)", "type": "range", "min": 0, "max": 1, "step": 1 },
+    { "id": "backfeed", "label": "Voltage on sender wire (V)", "type": "range", "min": 0, "max": 3.3, "step": 0.1 }
+  ]
+}
