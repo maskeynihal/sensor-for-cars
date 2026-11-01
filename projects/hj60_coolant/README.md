@@ -12,14 +12,14 @@ FriedRust-style 3.5" TFT dashboard with a buzzer alarm.
 |---|---|---|
 | ![check](docs/img/wokwi-check-screen.png) | ![main](docs/img/wokwi-main-screen.png) | ![grid](docs/img/wokwi-grid-screen.png) |
 
-Wokwi screenshots (ILI9341 320x240 stand-in). The real ILI9488 is 480x320. Design: [docs/img/design-mockup.png](docs/img/design-mockup.png).
+Wokwi screenshots (ILI9341 320x240 stand-in, taken on the classic ESP32 before the move to the S3; the screens are the same). The real ILI9488 is 480x320. Design: [docs/img/design-mockup.png](docs/img/design-mockup.png).
 
 | | |
 |---|---|
-| Board | ESP32 DevKit V1 (`esp32:esp32:esp32`), [ADR 0007](../../docs/adr/0007-hj60-coolant-on-esp32-devkit.md) |
-| Emulator board | ESP32 DevKit C v4 (`esp32:esp32:esp32`) |
+| Board | ESP32-S3 DevKitC-1 N16R8 (`esp32:esp32:esp32s3`), [ADR 0012](../../docs/adr/0012-hj60-move-to-esp32-s3.md) (was DevKit V1, ADR 0007) |
+| Emulator board | ESP32-S3 DevKitC-1 (`esp32:esp32:esp32s3`) |
 | Serial | 115200 baud |
-| Parts | ILI9488 3.5" SPI TFT, sender circuit for mode A or B on GPIO34/35 (+GPIO26 in B), battery divider (GPIO32), button (GPIO33), active buzzer via NPN (GPIO25). Pins: [docs/README.md](docs/README.md) |
+| Parts | ILI9488 3.5" SPI TFT, sender circuit for mode A or B on GPIO4/35 (+GPIO7 in B), battery divider (GPIO6), button (GPIO15), active buzzer via NPN (GPIO17). Pins: [docs/README.md](docs/README.md) |
 | Status | 39 native tests and the Wokwi mode B scenario pass. RPM and speed are DEMO values. Not on the truck yet: needs measurements M0–M6 ([report](docs/gauge-tap-report.md#6-plan)). **Don't trust WARN/ALARM until the M4 sender calibration** (two-point curve, ±10 °C near 100 °C) |
 | Idea | [docs/ideas/2026-11-01-hj60-coolant.md](../../docs/ideas/2026-11-01-hj60-coolant.md) |
 

@@ -1,6 +1,6 @@
 # 0007. hj60_coolant: new project on ESP32 DevKit V1
 
-- Status: Accepted
+- Status: Superseded by [0012](0012-hj60-move-to-esp32-s3.md)
 - Date: 2026-11-01
 - Projects: hj60_coolant
 

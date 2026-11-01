@@ -6,7 +6,7 @@
 flowchart TD
   S[setup: Serial, pins, ADC 11 dB, TFT, backlight] --> L{loop}
   L -->|mode A, every 10 ms| PA["samplePairA(): feed, sender, feed<br/>keep if feed > 3 V and moved ≤ 3%"]
-  L -->|mode B, every 100 ms| PB["serviceExcitationB(): read Vs with excitation off (backfeed)<br/>GPIO26 on, wait 2 ms, read Vtop + Vs, GPIO26 off"]
+  L -->|mode B, every 100 ms| PB["serviceExcitationB(): read Vs with excitation off (backfeed)<br/>GPIO7 on, wait 2 ms, read Vtop + Vs, GPIO7 off"]
   L -->|every 50 ms| BT[battery sample]
   L -->|every 1 s| W["evaluateWindow(): median k → Rs → °C<br/>state + log line"]
   L --> BZ[driveBuzzer]
@@ -41,7 +41,7 @@ Faults sound a double chirp every 5 s.
 | GRID | button | RPM, SPEED, WATER TEMP, BATTERY |
 | WATER | button, or automatic on WARN/ALARM | Big water temperature, RPM, SPEED, BATT |
 
-- The button (GPIO33) selects MAIN → GRID → WATER → MAIN. It does nothing during BOOT and CHECK.
+- The button (GPIO15) selects MAIN → GRID → WATER → MAIN. It does nothing during BOOT and CHECK.
 - On WARN or ALARM the WATER screen shows, with a red frame. ALARM flashes the frame. When the state goes back to OK,
   the screen that the driver chose comes back.
 - A fault replaces the WATER label with its name: SENDER OPEN, SENDER SHORT, WIRE HAS VOLTAGE, NO GAUGE FEED,

@@ -1,8 +1,8 @@
 // =====================================================================
 //  esp32_gauge_capture -- record the HJ60 gauge feed + sender waveform
 // ---------------------------------------------------------------------
-//  Board : ESP32 DevKit V1
-//  Pins  : GPIO34 = gauge feed (terminal E), GPIO35 = sender (terminal F),
+//  Board : ESP32-S3 DevKitC-1 (hj60_coolant pins)
+//  Pins  : GPIO4 = gauge feed (terminal E), GPIO5 = sender (terminal F),
 //          both through the 68k/10k (7.8:1) dividers in
 //          projects/hj60_coolant/docs/gauge-tap-report.md section 4.1.
 //
@@ -13,8 +13,8 @@
 //  arduino-cli monitor -p /dev/cu.usbserial-XXXX -c baudrate=921600 > capture.csv
 // =====================================================================
 
-#define FEED_PIN   34
-#define SENDER_PIN 35
+#define FEED_PIN    4
+#define SENDER_PIN  5
 const unsigned long CAPTURE_MS = 30000;
 const unsigned long PERIOD_US = 1000;
 

@@ -13,9 +13,9 @@ arduino-cli compile --fqbn arduino:renesas_uno:unor4wifi --libraries ./libraries
 arduino-cli upload  --fqbn arduino:renesas_uno:unor4wifi -p /dev/cu.usbmodemXXXX projects/_utilities/i2c_address_finder
 ```
 
-ESP32 (DevKit V1):
+ESP32-S3 (DevKitC-1, hj60_coolant pins):
 
 ```sh
-arduino-cli compile --fqbn esp32:esp32:esp32 projects/_utilities/esp32_gauge_capture
-arduino-cli upload  --fqbn esp32:esp32:esp32 -p /dev/cu.usbserial-XXXX projects/_utilities/esp32_gauge_capture
+arduino-cli compile --fqbn esp32:esp32:esp32s3 projects/_utilities/esp32_gauge_capture
+arduino-cli upload  --fqbn esp32:esp32:esp32s3 -p /dev/cu.usbserial-XXXX projects/_utilities/esp32_gauge_capture
 ```

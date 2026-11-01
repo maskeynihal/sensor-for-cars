@@ -27,7 +27,7 @@ The mockup has 6 panels. Without BOOST and EGT, they become 5 screens:
 
 Rules for the screens:
 
-- A button (GPIO33) selects the next screen: MAIN → GRID → WATER → MAIN.
+- A button (GPIO15) selects the next screen: MAIN → GRID → WATER → MAIN.
 - WARN and ALARM change to the WATER screen automatically. The frame is red. ALARM flashes the frame.
 - A fault shows a banner with the fault name.
 - RPM and speed have a small "DEMO" label until real sensors exist.
@@ -37,7 +37,7 @@ Rules for the screens:
 ## Option B in the firmware
 
 - `senderMode` = `SENDER_MODE_A` (passive taps) or `SENDER_MODE_B` (direct). Change it at the top of the sketch.
-- Option B pins: GPIO26 switches the excitation on. GPIO34 measures Vtop and GPIO35 measures the sender voltage Vs,
+- Option B pins: GPIO7 switches the excitation on. GPIO4 measures Vtop and GPIO5 measures the sender voltage Vs,
   each through a matched 47k/47k divider. (The first design read Vs directly. The Wokwi chip showed that an open wire
   then reads as "cold", because the ADC compresses near 3 V.)
 - For each measurement, the ESP32 switches the excitation on and waits 2 ms. It reads Vtop and Vs. Then it switches
@@ -47,19 +47,19 @@ Rules for the screens:
   excitation off).
 - **Warning:** with option B, the dash gauge does not operate. The ESP32 display is then the only temperature gauge.
 
-## Pins (ESP32 DevKit V1)
+## Pins (ESP32-S3 DevKitC-1, see ADR 0012)
 
 | Function | GPIO | Note |
 |---|---|---|
-| TFT SCK / MOSI | 18 / 23 | VSPI. MISO not connected. |
-| TFT CS / DC / RST | 5 / 16 / 17 | |
-| TFT backlight | 21 | PWM dimming |
-| Buzzer (via NPN) | 25 | |
-| Excitation switch (option B) | 26 | High = on |
-| Battery voltage (68k/10k) | 32 | ADC1 |
-| Feed (A) / Vtop (B) | 34 | ADC1 |
-| Sender (A) / Vs (B) | 35 | ADC1 |
-| Screen button | 33 | To ground, internal pull-up |
+| TFT SCK / MOSI | 12 / 11 | FSPI default pins. MISO not connected. |
+| TFT CS / DC / RST | 10 / 9 / 8 | |
+| TFT backlight | 18 | PWM dimming |
+| Buzzer (via NPN) | 17 | |
+| Excitation switch (option B) | 7 | High = on |
+| Battery voltage (68k/10k) | 6 | ADC1 |
+| Feed (A) / Vtop (B) | 4 | ADC1 |
+| Sender (A) / Vs (B) | 5 | ADC1 |
+| Screen button | 15 | To ground, internal pull-up |
 
 ## Work steps
 
@@ -92,5 +92,7 @@ Rules for the screens:
   check failed when we broke the code on purpose.
 - Wokwi: the mode B scenario passes (OK → ALARM → FAULT-OPEN → FAULT-BACKFEED). Screenshots are in `docs/img/`.
 - Firmware build (ESP32 DevKit V1, ILI9488): 468,547 bytes flash (35%), 25,816 bytes RAM (7%).
+- Later the same day the project moved to the ESP32-S3 (ADR 0012): 502,029 bytes flash (38%), 25,936 bytes RAM (7%).
+  Flashed to the owner's board. It runs and logs once each second.
 - Not done: upload to the board, and any measurement on the truck.
 
