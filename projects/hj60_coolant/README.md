@@ -34,6 +34,7 @@ make upload   P=hj60_coolant PORT=/dev/cu.usbserial-XXXX
 
 ## Docs
 
+- [Interactive circuit explainer (open in a browser)](docs/html/circuit-explainer.html): gauge, sender, regulator, ESP32 taps
 - [Report: what the multimeter showed, what went wrong, the plan](docs/gauge-tap-report.md)
 - [Hardware + wiring](docs/README.md)
 - [Software architecture](docs/architecture.md)

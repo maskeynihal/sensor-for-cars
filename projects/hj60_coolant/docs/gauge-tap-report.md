@@ -7,6 +7,7 @@
 - Goal: read engine coolant temperature on an ESP32 DevKit V1, using the truck's **existing** gauge sender (and later our
   own probe as a cross-check). Alarm and display, then logging and configurable limits.
 - Primary source: Toyota FSM, Body Electrical, pages 13-73 and 13-74 (photos in [img/](img/)).
+- New to this circuit? Start with the interactive explainer: [html/circuit-explainer.html](html/circuit-explainer.html).
 
 ## 1. Summary
 
