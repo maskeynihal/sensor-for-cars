@@ -1,6 +1,6 @@
 # LC78 OFFROAD -- Water + Air Monitor: full documentation
 
-Firmware: [`sketches/water_monitor/water_monitor.ino`](../../sketches/water_monitor/water_monitor.ino)
+Firmware: [`projects/water_monitor/firmware/water_monitor/water_monitor.ino`](../../firmware/water_monitor/water_monitor.ino)
 
 Deep dive: [How the temperature sensors work — analog physics to °C/°F](sensor-explainer.md)
 
@@ -177,7 +177,7 @@ Install via **Tools -> Manage Libraries**:
 4. **DallasTemperature** (Miles Burton)
 5. **DHT sensor library** (Adafruit) -- say **yes** to Adafruit Unified Sensor
 
-All of these are already vendored under [`../libraries/`](../../libraries).
+All of these are already vendored under [`libraries/`](../../../../libraries).
 
 ---
 
@@ -229,14 +229,14 @@ libraries, so you do not have to install them by name.
 arduino-cli compile \
   --fqbn arduino:renesas_uno:unor4wifi \
   --libraries ./libraries \
-  sketches/water_monitor
+  projects/water_monitor/firmware/water_monitor
 
 # upload (replace the port with the one from 'arduino-cli board list')
 arduino-cli upload \
   --fqbn arduino:renesas_uno:unor4wifi \
   --libraries ./libraries \
   -p /dev/cu.usbmodemXXXX \
-  sketches/water_monitor
+  projects/water_monitor/firmware/water_monitor
 ```
 
 Watch the Serial output from the CLI (9600 baud, matches the sketch):
@@ -249,12 +249,12 @@ arduino-cli monitor -p /dev/cu.usbmodemXXXX -c baudrate=9600
 
 ## 10. Bring-up (step by step)
 
-1. **Blink test** -- upload `sketches/blink_led/blink_led.ino`. The on-board LED path (D8) proves
+1. **Blink test** -- upload `projects/_utilities/blink_led/blink_led.ino`. The on-board LED path (D8) proves
    the toolchain and the board.
-2. **Find the OLED** -- upload `sketches/i2c_address_finder/i2c_address_finder.ino`, open Serial at
+2. **Find the OLED** -- upload `projects/_utilities/i2c_address_finder/i2c_address_finder.ino`, open Serial at
    115200. It should report `0x3C`. If it reports something else, change `SCREEN_ADDRESS`.
 3. **Wire the sensors** per the pin map above. Double-check the DS18B20 4.7 kO pull-up.
-4. **Upload** `sketches/water_monitor/water_monitor.ino`. Open Serial at **9600**.
+4. **Upload** `projects/water_monitor/firmware/water_monitor/water_monitor.ino`. Open Serial at **9600**.
 5. **Verify**: the OLED shows the truck + readouts; Serial prints the status line.
 6. **Test the buzzer**: warm the water probe past 35 C (beeps), then past 40 C (steady).
 
