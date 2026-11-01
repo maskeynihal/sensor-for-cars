@@ -3,7 +3,7 @@
 //
 // The truck side is modelled as the FSM circuit: a regulator feed V (pulsed
 // or steady) across the 25 ohm gauge heater in series with the sender Rs.
-// The ADC sees each tap through the 13:1 divider.
+// The ADC sees each tap through the 7.8:1 divider (68k/10k).
 #include "hwtest.h"
 
 float ohmsToC(float rs);  // from the sketch
@@ -11,7 +11,7 @@ float ohmsToC(float rs);  // from the sketch
 namespace {
 
 const int FEED = 34, SENDER = 35, BUZZER = 25;
-const double RG = 25.0, RATIO = 13.0;
+const double RG = 25.0, RATIO = 7.8;
 
 // Sender resistance for a temperature, same Beta fit as the sketch
 // (226 ohm @ 50 C, 26 ohm @ 115 C).
@@ -124,7 +124,7 @@ TEST(feed_level_does_not_change_reading) {
   truck.feedOn = 7.0;
   runAt(95.0);
   double low = lastCoolant();
-  truck.feedOn = 28.0;   // open-ish regulator at full charging voltage
+  truck.feedOn = 14.4;   // regulator contacts closed, engine running (12 V system)
   sim::runFor(3000);
   CHECK_NEAR(low, 95.0, 0.6);
   CHECK_NEAR(lastCoolant(), 95.0, 0.6);

@@ -3,11 +3,11 @@
 // ---------------------------------------------------------------------
 //  Board : ESP32 DevKit V1
 //  Pins  : GPIO34 = gauge feed (terminal E), GPIO35 = sender (terminal F),
-//          both through the 120k/10k dividers in
+//          both through the 68k/10k (7.8:1) dividers in
 //          projects/hj60_coolant/docs/gauge-tap-report.md section 4.1.
 //
 //  Prints CSV at 921600 baud, 1 kHz, for 30 s after reset:
-//    t_ms,feed_mV,sender_mV        (ADC millivolts, before x13)
+//    t_ms,feed_mV,sender_mV        (ADC millivolts, before x7.8)
 //  Then prints "done". Press EN (reset) to capture again.
 //
 //  arduino-cli monitor -p /dev/cu.usbserial-XXXX -c baudrate=921600 > capture.csv

@@ -1,11 +1,11 @@
 // =====================================================================
 //  hj60_coolant  --  HJ60 coolant temperature from the factory gauge sender
 // ---------------------------------------------------------------------
-//  Board   : ESP32 DevKit V1 (WROOM-32), powered 5 V from a 24 V
+//  Board   : ESP32 DevKit V1 (WROOM-32), powered 5 V from a 12 V
 //            automotive front end (docs/adr/0009)
 //  Inputs  : GPIO34 (ADC1) = gauge feed, temp gauge terminal E
 //            GPIO35 (ADC1) = sender wire, temp gauge terminal F (YG)
-//            Each through 120k/10k (13:1) + 100 nF + BAT54S clamp.
+//            Each through 68k/10k (7.8:1) + 100 nF + BAT54S clamp.
 //  Display : 1.3" SH1106 OLED, I2C @ 0x3C (SDA=21, SCL=22)
 //  Buzzer  : ACTIVE buzzer on GPIO25 via NPN transistor
 //
@@ -38,7 +38,7 @@
 Adafruit_SH1106G display(128, 64, &Wire, -1);
 
 // ---- hardware constants (measure on the truck: report section 6) ----
-#define DIVIDER_RATIO 13.0      // (120k + 10k) / 10k
+#define DIVIDER_RATIO 7.8       // (68k + 10k) / 10k
 #define GAUGE_R_OHMS  25.0      // temp gauge E-F, FSM "STD 25 ohm" (M1)
 #define SENDER_R0     226.0     // ohm at SENDER_T0_C (FSM 13-74)
 #define SENDER_T0_C   50.0

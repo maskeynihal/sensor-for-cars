@@ -7,7 +7,7 @@
 ## Context
 
 - The HJ60 temperature gauge is a bimetal receiver (E–F 25 Ω) fed from a bimetal voltage regulator inside the fuel
-  gauge, after a 24 V dropping resistor (FSM 13-73/13-74). The feed **pulses**. The FSM tests it with a flashing bulb.
+  gauge (FSM 13-73/13-74). On 24 V trucks a dropping resistor sits before it; this truck is 12 V. The feed **pulses**. The FSM tests it with a flashing bulb.
 - Owner measurements: ~10 V at the sender wire for a few seconds after key-on, then a wildly fluctuating DC reading.
   That is the regulator cycling.
 - The sender is an NTC: 226 Ω at 50 °C, 26 Ω at 115 °C (FSM). It must keep driving the dash gauge.
@@ -32,7 +32,7 @@ absolute values. Keep option 4 (a PTFE DS18B20 in an upper-hose thermowell) as t
 
 ## Consequences
 
-- Two 120 kΩ / 10 kΩ 0.1% dividers with 100 nF and BAT54S clamps; ADC1 pins GPIO34/35.
+- Two 68 kΩ / 10 kΩ (7.8:1) 0.1% dividers with 100 nF and BAT54S clamps; ADC1 pins GPIO34/35.
 - Firmware gates on "feed on", rejects pairs across a contact edge, uses the median over 1 s.
 - An open sender, a shorted sender, or no feed is a fault, not "cold".
 - Accuracy depends on Rg (1 Ω ≈ 4% in Rs), channel matching, and the engine-to-cabin ground offset.

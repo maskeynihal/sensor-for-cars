@@ -1,7 +1,9 @@
 # HJ60 coolant temperature: what went wrong, what the measurements mean, and the plan
 
 - Date: 2026-11-01
-- Vehicle: Toyota Land Cruiser HJ60, 2H 4.0 L diesel, **24 V system** (two batteries in series, confirmed by the owner)
+- Vehicle: Toyota Land Cruiser HJ60, 2H 4.0 L diesel, **12 V system, single battery**: 12.9 V engine off, 14.0 V
+  running (owner measurement, 2026-11-01). An earlier draft said 24 V; that was wrong for this truck. Some HJ60s
+  (Canada, Europe, ex-JDM) are 24 V, which is why the FSM shows a "Resister (24V)".
 - Goal: read engine coolant temperature on an ESP32 DevKit V1, using the truck's **existing** gauge sender (and later our
   own probe as a cross-check). Alarm and display, then logging and configurable limits.
 - Primary source: Toyota FSM, Body Electrical, pages 13-73 and 13-74 (photos in [img/](img/)).
@@ -21,9 +23,9 @@
    samples a square-ish wave a few times a second and shows random-looking numbers.
 5. The fix is to measure the **ratio**, not the voltage. Sample the gauge feed (terminal E) and the sender wire
    (terminal F) together. The sender and the gauge heater form a resistive divider, so
-   `Rs = Rg × Vs / (Vfeed − Vs)`. That holds whatever the regulator does (pulsing, battery 24 to 29 V, a solid-state
+   `Rs = Rg × Vs / (Vfeed − Vs)`. That holds whatever the regulator does (pulsing, battery 12 to 14.5 V, a solid-state
    regulator retrofit). The ESP32 never loads the circuit, so the dash gauge keeps working.
-6. The water_monitor prototype (UNO R4 + DS18B20) can't go into this truck as is: 24 V supply, 35/40 °C limits, a PVC
+6. The water_monitor prototype (UNO R4 + DS18B20) can't go into this truck as is: no automotive power protection, 35/40 °C limits, a PVC
    probe cable, "probe missing = silent". See section 5.
 
 ## 2. What the FSM says (HJ60 = "BJ, HJ Series")
@@ -32,7 +34,7 @@ From [13-73](img/fsm-13-73-water-temp-gauge-circuit.png) and
 [13-74](img/fsm-13-74-gauge-and-sender-inspection.png):
 
 ```
- 24 V batt ── ignition relay ── ENGINE fuse 15 A ── Resister (24V) ──► A ┐
+ 12 V batt ── ignition relay ── ENGINE fuse 15 A ── (Resister, 24 V trucks only) ──► A ┐
                                                                         │ voltage regulator
                                                        (inside the fuel receiver gauge, bimetal contacts)
                                                                         │
@@ -52,7 +54,7 @@ From [13-73](img/fsm-13-73-water-temp-gauge-circuit.png) and
 | Gauge type | Bimetal (thermal) receiver | 13-74 "Inspection (Bimetal Type)" |
 | Gauge heater resistance E–F | **STD 25 Ω** | 13-74 |
 | Regulator | Built into the fuel receiver gauge | 13-74 |
-| Feed on 24 V trucks | Through a series "Resister (24V)" after the 15 A ENGINE fuse | 13-73 BJ/HJ diagram |
+| Feed on 24 V trucks | Through a series "Resister (24V)" after the 15 A ENGINE fuse. **This truck is 12 V**, so expect no resistor; check in M0 | 13-73 BJ/HJ diagram |
 | Feed at terminal A | "2–7 V" with the ignition on (wording is ambiguous; see note) | 13-74 |
 | Receiver test | Ground the sender wire through a 3.4 W bulb. The bulb **flashes** and the needle **vibrates** | 13-73 |
 | Sender | 50 °C → 226 Ω, 115 °C → 26 Ω | 13-74 table |
@@ -117,7 +119,8 @@ reading is meaningless, not a fault. **Rule: resistance only with the sender wir
 - Key off: no feed, 0 V. Correct.
 - Key on: the regulator's bimetal is cold, so its contacts are closed. The feed sits at its "on" level, and the sender
   node is `Vfeed × Rs/(Rs+25)`. With Rs ≈ 150 Ω, k = 0.86, so 10 V at the sender means about **11.7 V of feed** during
-  the on-time. The 24 V supply has already dropped across the "Resister (24V)" and the wiring.
+  the on-time. That's the 12.9 V battery minus drops in the ignition relay, fuse, wiring and regulator contacts. With
+  the engine running (14 V) expect the on-level to rise to about 12.5–13 V. The ratio method doesn't care.
 - After a few seconds the regulator heater warms its bimetal, the contacts open (node → ~0 V), it cools, they close
   again. The feed becomes a pulse train. Its average sets the needle, because the gauge is also a slow heater that
   averages. This is exactly the FSM's bulb-flashing test.
@@ -160,19 +163,19 @@ the cluster and tap at the gauge's own terminals.
 - Check: key on, the feed tap never reads lower than the sender tap.
 
 ```
- tap ──[ 120 kΩ 0.1% ]──┬───────────┬──────► ESP32 ADC1 pin (GPIO34 = feed, GPIO35 = sender)
+ tap ──[ 68 kΩ 0.1% ]───┬───────────┬──────► ESP32 ADC1 pin (GPIO34 = feed, GPIO35 = sender)
                         │           │
                      [10 kΩ 0.1%] [100 nF]        BAT54S: clamps to 3V3 and GND at the ADC pin
                         │           │
                        ⏚ (cluster ground = ESP32 GND)
 ```
 
-- Ratio 13:1. A 29 V worst case (engine running, open sender, feed at the full post-resistor level) becomes 2.23 V,
+- Ratio 7.8:1, sized for the 12 V system. A 16 V worst case (a failed alternator regulator overcharging) becomes 2.05 V,
   inside the ESP32 accurate band at 11 dB attenuation (about 0.15 to 2.45 V). The measured on-level of ~11.7 V
-  becomes ~0.90 V.
-- Sensitivity near 100 °C: k changes by about 0.007 per °C, about 6.4 mV per °C at the ADC with an 11.7 V feed.
-  Averaging 64 to 128 samples gets this to about 0.2 to 0.5 °C.
-- Load on the gauge circuit: 130 kΩ against a 25 to 200 Ω node, below 0.2%. The needle doesn't move.
+  becomes ~1.5 V. Spikes above that are the clamp's job.
+- Sensitivity near 100 °C: k changes by about 0.007 per °C, about 10.5 mV per °C at the ADC with an 11.7 V feed.
+  Averaging 64 to 128 samples gets this to about 0.2 to 0.3 °C.
+- Load on the gauge circuit: 78 kΩ against a 25 to 200 Ω node, below 0.3%. The needle doesn't move.
 - The 100 nF capacitor gives τ ≈ 0.9 ms. That's an anti-alias filter for contact bounce, and much faster than the
   regulator cycle (seconds).
 - Use matched (0.1%) resistors on both channels, because the divider ratio cancels in k. Or calibrate with a fixed
@@ -181,27 +184,34 @@ the cluster and tap at the gauge's own terminals.
   cooks the gauge heater. Same rule for the probes: no ohms with power on.
 - Use ADC1 pins only (GPIO32 to 39). ADC2 is unavailable while WiFi is on.
 - **ESP32 ADC offset is the biggest error source.** Even with eFuse calibration (`analogReadMilliVolts`), expect
-  roughly ±20–30 mV. At a 0.9 V feed that is up to about 3% in k, or a few °C. Two fixes: calibrate with fixed
-  resistors (M5) and add an offset constant if needed, and once M2 shows the real on-level, lower the divider ratio
-  (e.g. 8:1) so the signal sits nearer 1.5 V. The clamp still protects the pin when an open sender pushes the tap
-  higher.
+  roughly ±20–30 mV. At a 1.5 V feed that is up to about 2% in k, or 2–3 °C. Calibrate with fixed resistors (M5) and
+  add an offset constant if needed.
 
-### 4.2 Power: 24 V truck → 5 V ESP32
+### 4.2 Power: 12 V truck → 5 V ESP32
 
-The ESP32 DevKit V1 takes 5 V on its VIN/5V pin. **Don't** feed it 24 V. Build the front end in this order
-(details in [ADR 0009](../../../docs/adr/0009-hj60-24v-power-front-end.md), Proposed):
+The ESP32 DevKit V1 takes 5 V on its VIN/5V pin. **Don't** feed it 12 V. Build the front end in this order
+(details in [ADR 0009](../../../docs/adr/0009-hj60-12v-power-front-end.md), Proposed):
 
 1. **Fuse** at the tap (1 A), on an ignition-switched circuit.
 2. **Reverse-polarity protection**: a Schottky diode, or an ideal-diode controller.
-3. **TVS diode** across the input. Standoff above 32 V for a 24 V system: a clamped load dump is about 58 V, and ISO
-   7637-2 pulses on 24 V systems reach several hundred volts.
-4. **Buck converter rated for at least 60 V input**, with a 5 V output, feeding the DevKit's 5V pin.
+3. **TVS diode** across the input. Standoff about 26–28 V, so a 24–26 V jump start doesn't make it conduct. Its clamp
+   voltage (about 45 V) must sit below the converter's maximum input.
+4. **Buck converter rated for at least 60 V input** (40 V is the bare minimum), with a 5 V output, feeding the
+   DevKit's 5V pin. It should hold 5 V down to about 6 V input. If the diesel's cranking dip resets the ESP32, that's
+   acceptable: it reboots in about a second into `WAIT`.
 5. **Common ground at the cluster.**
 
-The ISO 16750-2 24 V load dump (Test A, unsuppressed) is 151–202 V
-([TI SNOAAA1](https://ti.com/document-viewer/lit/html/SNOAAA1)). Test B (clamped) is 58 V for 24 V systems
-([Vishay](https://www.digikey.de/de/ptm/v/vishay-semiconductor-diodes-division/xclampr-tvs-in-operation/tutorial?slide=9)).
-ISO 7637-2 24 V pulses: 1 = −300/−600 V, 3a = −150/−300 V, 3b = +150/+300 V
+12 V figures (vendor app notes quoting the standards):
+
+- ISO 16750-2 load dump, Test A (unsuppressed): 79–101 V for 40–400 ms
+  ([TI SNOAAA1](https://ti.com/document-viewer/lit/html/SNOAAA1)).
+- Test B (clamped): 35 V
+  ([ADI](https://www.analog.com/en/resources/technical-articles/low-quiescent-current-surge-stopper-robust-automotive-supply-protection.html)).
+- Cranking dips to about 6 V
+  ([MPS](https://media.monolithicpower.com/mps_cms_document/c/o/cold_crank_to_load_dump-primer_ver1.3.pdf)).
+- Jump start: 24–26 V for 60 s. Reverse battery: −14 V for 60 s
+  ([ATEC summary](https://www.atecorp.com/compliance-standards/iso/ISO-16750-2)).
+- ISO 7637-2 12 V pulses: 1 = −75/−100 V, 3b = +75/+150 V
 ([Littelfuse](https://www.mouser.com/pdfdocs/Littelfuse_TVS_Diode_Automotive_Circuit_Protection_Using_Automotive_TVS_Diodes_Application_Notepdf.pdf)).
 
 ### 4.3 Outputs
@@ -220,7 +230,7 @@ water_monitor was a bench project that watched "a tank of water". As an HJ60 coo
 | 2 | Missing probe = silent | A failed sensor looks like "all fine". The alarm fails silently | Fail loud: sender open, short, or no feed is a **fault**, with its own sound and screen |
 | 3 | DS18B20 PVC "waterproof" probe | PVC cable is rated to about 80–85 °C. The chip maxes out at 125 °C, at the edge of the 124 °C pressurised boil point. ±0.5 °C only from −10 to +85 °C | Use the OEM sender as primary. For a second sensor, PTFE-cable DS18B20 in a hose-adapter thermowell, not bare in pressurised glycol |
 | 4 | DS18B20 power-on value 85.0 °C | 85.0 is a normal coolant reading, so a reset glitch looks valid | Reject exactly 85.0 right after a conversion error (if the DS18B20 is used) |
-| 5 | UNO R4 VIN max 24 V | A 24 V truck charges at 28–29 V and has transients | Automotive front end feeding 5 V (4.2) |
+| 5 | UNO R4 on USB, or VIN with no transient protection | VIN (6–24 V) only has Schottky diodes: no TVS. A 12 V truck sees 35–101 V load dumps and cranking dips to about 6 V | Automotive front end feeding 5 V (4.2) |
 | 6 | No transient, reverse or fuse protection | Load dump, jump start, cranking | 4.2 |
 | 7 | Breadboard + Dupont jumpers | Vibration from 10 to 2000 Hz fretts low-force contacts | Soldered perfboard or PCB, locking connectors, strain relief |
 | 8 | Animated truck scene | It pulls the driver's eyes. NHTSA guidance is 2 s per glance and 12 s per task. OLED life is about 10k h at full brightness | Static big number, dim, blank when idle, flash only on alarm |
@@ -246,7 +256,7 @@ or a coolant-level probe.
 | M3 | Ground offset | Engine running, lights and fan on. DC mV between the engine block (by the sender) and cluster ground | mV. Above 50 mV, fix the grounds |
 | M4 | Sender curve | Thermometer at the thermostat housing or upper hose (IR gun or a probe), sender disconnected, warm-up from cold. Ohms every 5 °C. Repeat connected using the ESP32 log | A table of °C vs Ω → replace the Beta constants |
 | M5 | Channel match | Replace the sender with a 47 Ω and a 100 Ω resistor. Check the ESP32 Rs reading | Correction factor if off by more than 1% |
-| M6 | System voltage | Engine off and running, at the fuse block | 24 to 29 V? |
+| M6 | System voltage | Done: 12.9 V engine off, 14.0 V running (single 12 V battery). Still useful: the minimum during cranking (DMM min/max mode) | Cranking minimum V |
 
 ### Phase 1: read the OEM sender (built: `projects/hj60_coolant`, native tests + Wokwi)
 

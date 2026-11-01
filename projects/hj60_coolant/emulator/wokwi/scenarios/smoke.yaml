@@ -2,7 +2,7 @@
 # two potentiometers stand in for the post-divider ADC voltages (0..3.3 V).
 # Wokwi's ESP32 ADC is not ideal: measured V ~= 3.47 * position + 0.137 V
 # (2026-11-01 run), so positions are picked from that, not from 3.3 * position.
-#   feed   0.30  -> 1.18 V at the ADC (15.3 V at the tap)
+#   feed   0.30  -> 1.18 V at the ADC (9.2 V at the tap with the 7.8:1 divider)
 #   sender 0.206 -> k 0.72 -> ~84 C (OK)
 #   sender 0.12  -> k 0.47 -> ~120 C (ALARM)
 #   sender 0.30  -> k 1.00 -> FAULT-OPEN

@@ -33,3 +33,9 @@ Option 1 (the owner chose it). FQBN and sim FQBN `esp32:esp32:esp32`; Wokwi part
 - The native mocks gained ESP32 ADC calls (`analogReadMilliVolts`, attenuation/resolution stubs, a time-varying
   `sim::analogMvFn`).
 - The SH1106 → SSD1306 shim from [ADR 0005](0005-sim-display-shim-sh1106.md) is copied into this project.
+
+## Note (2026-11-01, after acceptance)
+
+The Context says "24 V system". The owner later measured a single 12 V battery (12.9 V off, 14.0 V running). The
+decision (ESP32 DevKit V1, new project) doesn't depend on it. Power is covered in
+[ADR 0009](0009-hj60-12v-power-front-end.md).

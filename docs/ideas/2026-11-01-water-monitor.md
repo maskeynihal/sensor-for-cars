@@ -18,9 +18,9 @@ warm (35 °C) or hot (40 °C).
 
 ## Open questions
 
-- Answered 2026-11-01: the real target is **engine coolant in an HJ60 Land Cruiser (24 V)**, not a water tank. That
+- Answered 2026-11-01: the real target is **engine coolant in an HJ60 Land Cruiser (12 V)**, not a water tank. That
   work moved to [projects/hj60_coolant](../../projects/hj60_coolant/) on an ESP32. water_monitor stays as the bench
-  prototype. Why it doesn't fit the truck as is (thresholds, silent probe failure, PVC probe, 24 V VIN limit, Dupont
+  prototype. Why it doesn't fit the truck as is (thresholds, silent probe failure, PVC probe, no automotive power protection, Dupont
   wiring, animation): [gauge-tap-report section 5](../../projects/hj60_coolant/docs/gauge-tap-report.md#5-what-we-did-wrong-in-water_monitor-for-this-use).
 - Thresholds are fixed in code. Should they be configurable (buttons? WiFi, since the R4 has it)?
 - Use the R4 WiFi radio to log to a phone?

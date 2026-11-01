@@ -1,6 +1,6 @@
 # hj60_coolant
 
-Engine coolant temperature for a Toyota Land Cruiser HJ60 (2H, 24 V), read from the factory gauge sender without
+Engine coolant temperature for a Toyota Land Cruiser HJ60 (2H, 12 V), read from the factory gauge sender without
 disturbing the dash gauge. OLED readout and buzzer alarm.
 
 | | |
@@ -8,7 +8,7 @@ disturbing the dash gauge. OLED readout and buzzer alarm.
 | Board | ESP32 DevKit V1 (`esp32:esp32:esp32`), [ADR 0007](../../docs/adr/0007-hj60-coolant-on-esp32-devkit.md) |
 | Emulator board | ESP32 DevKit C v4 (`esp32:esp32:esp32`) |
 | Serial | 115200 baud |
-| Parts | Gauge taps E/F via 13:1 dividers on GPIO34/35, SH1106 OLED (21/22), active buzzer via NPN (GPIO25) |
+| Parts | Gauge taps E/F via 7.8:1 (68k/10k) dividers on GPIO34/35, SH1106 OLED (21/22), active buzzer via NPN (GPIO25) |
 | Status | Native tests and Wokwi pass. Not on the truck yet: needs measurements M0–M6 ([report](docs/gauge-tap-report.md#6-plan)). **Don't trust WARN/ALARM until the M4 sender calibration** (two-point curve, ±10 °C near 100 °C) |
 | Idea | [docs/ideas/2026-11-01-hj60-coolant.md](../../docs/ideas/2026-11-01-hj60-coolant.md) |
 
