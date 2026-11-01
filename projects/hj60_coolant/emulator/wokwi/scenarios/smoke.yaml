@@ -1,7 +1,7 @@
 # Mode B (direct). The custom chip "sender" (chips/hj60-sender.chip.c) stands
-# in for 3.3 V -> Rref 100 ohm -> sender. It outputs Vtop/2 on GPIO34 and Vs on
-# GPIO35 only while GPIO26 (excitation) is high, like the real circuit.
-# The battery is a potentiometer on GPIO32: 0.437 -> ~12.9 V.
+# in for 3.3 V -> Rref 100 ohm -> sender. It outputs Vtop/2 on GPIO4 and Vs/2 on
+# GPIO5 only while GPIO7 (excitation) is high, like the real circuit.
+# The battery is a potentiometer on GPIO6: 0.437 -> ~12.9 V.
 # Wokwi's ESP32 ADC model adds an offset of about +0.14 V. The offset does not
 # cancel in the ratio, so the sim reads low at the hot end (85 C -> ~76 C,
 # 115 C -> ~97 C). The real board gets ADC_OFFSET_MV from step M5. Thus the
@@ -24,7 +24,7 @@ steps:
   - wait-serial: 'Mode:B  State:OK'
   - expect-pin:
       part-id: mcu
-      name: 25
+      name: 17
       value: 0
 
   - set-control:
@@ -35,7 +35,7 @@ steps:
   - delay: 200ms
   - expect-pin:
       part-id: mcu
-      name: 25
+      name: 17
       value: 1
 
   - set-control:

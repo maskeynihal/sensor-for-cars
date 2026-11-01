@@ -1,22 +1,23 @@
 // =====================================================================
 //  hj60_coolant  --  HJ60 coolant temperature + FriedRust TFT dashboard
 // ---------------------------------------------------------------------
-//  Board   : ESP32 DevKit V1 (WROOM-32), powered 5 V from a 12 V
-//            automotive front end (docs/adr/0009)
+//  Board   : ESP32-S3 DevKitC-1 (N16R8), powered 5 V from a 12 V
+//            automotive front end (docs/adr/0009, docs/adr/0012)
+//            GPIO26-37 are flash/PSRAM on this module: do not use them.
 //  Display : ILI9488 3.5" 480x320 SPI TFT (docs/adr/0010)
-//            SCK=18 MOSI=23 CS=5 DC=16 RST=17 backlight=21
-//  Buzzer  : ACTIVE buzzer on GPIO25 via NPN transistor
-//  Button  : GPIO33 to ground (next screen)
-//  Battery : GPIO32 via 68k/10k (7.8:1)
+//            SCK=12 MOSI=11 CS=10 DC=9 RST=8 backlight=18
+//  Buzzer  : ACTIVE buzzer on GPIO17 via NPN transistor
+//  Button  : GPIO15 to ground (next screen)
+//  Battery : GPIO6 via 68k/10k (7.8:1)
 //
 //  SENDER MODE (set senderMode below before you flash):
 //   A = passive taps, dash gauge keeps working (docs/adr/0008)
-//       GPIO34 = gauge feed E, GPIO35 = sender wire F, each 68k/10k.
+//       GPIO4 = gauge feed E, GPIO5 = sender wire F, each 68k/10k.
 //       k = Vs/Vfeed = Rs/(Rs+Rg) while the regulator is on.
 //   B = direct: YG wire DISCONNECTED from the gauge, wired to the ESP32.
 //       THE DASH GAUGE DOES NOT WORK IN MODE B.
-//       GPIO26 switches 3.3 V -> Schottky -> Rref 100 ohm -> sender.
-//       GPIO34 = Vtop, GPIO35 = Vs, each via a matched 47k/47k + 10 nF.
+//       GPIO7 switches 3.3 V -> Schottky -> Rref 100 ohm -> sender.
+//       GPIO4 = Vtop, GPIO5 = Vs, each via a matched 47k/47k + 10 nF.
 //       (Vs must be divided too: an open sender puts Vs = Vtop ~3 V,
 //       where the ESP32 ADC is compressed and an open reads as "cold".)
 //       Rs = Rref*Vs/(Vtop-Vs). Vs is also read with the excitation
@@ -50,16 +51,17 @@ enum SenderMode { SENDER_MODE_A, SENDER_MODE_B };
 SenderMode senderMode = SENDER_MODE_B;
 
 // ---- pins ----
-#define FEED_PIN     34   // A: gauge feed E  / B: Vtop
-#define SENDER_PIN   35   // A: sender wire F / B: Vs
-#define EXCITE_PIN   26   // B: excitation switch, HIGH = on
-#define BATT_PIN     32
-#define BUZZER_PIN   25
-#define BUTTON_PIN   33
-#define TFT_CS        5
-#define TFT_DC       16
-#define TFT_RST      17
-#define TFT_BL       21
+// ESP32-S3: ADC1 is GPIO1-10. SPI uses the default FSPI pins SCK=12, MOSI=11.
+#define FEED_PIN      4   // A: gauge feed E  / B: Vtop   (ADC1_CH3)
+#define SENDER_PIN    5   // A: sender wire F / B: Vs     (ADC1_CH4)
+#define BATT_PIN      6   // (ADC1_CH5)
+#define EXCITE_PIN    7   // B: excitation switch, HIGH = on
+#define BUZZER_PIN   17
+#define BUTTON_PIN   15
+#define TFT_CS       10
+#define TFT_DC        9
+#define TFT_RST       8
+#define TFT_BL       18
 
 DIYables_ILI9488_SPI tft(320, 480, TFT_CS, TFT_DC, TFT_RST);
 

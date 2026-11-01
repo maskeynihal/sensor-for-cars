@@ -4,7 +4,7 @@
   "editor": "wokwi",
   "parts": [
     {
-      "type": "board-esp32-devkit-c-v4",
+      "type": "board-esp32-s3-devkitc-1",
       "id": "mcu",
       "top": 0,
       "left": 0,
@@ -66,7 +66,7 @@
     ],
     [
       "lcd:VCC",
-      "mcu:3V3",
+      "mcu:3V3.1",
       "red",
       []
     ],
@@ -78,37 +78,37 @@
     ],
     [
       "lcd:CS",
-      "mcu:5",
+      "mcu:10",
       "orange",
       []
     ],
     [
       "lcd:D/C",
-      "mcu:16",
+      "mcu:9",
       "green",
       []
     ],
     [
       "lcd:RST",
-      "mcu:17",
+      "mcu:8",
       "white",
       []
     ],
     [
       "lcd:MOSI",
-      "mcu:23",
+      "mcu:11",
       "blue",
       []
     ],
     [
       "lcd:SCK",
-      "mcu:18",
+      "mcu:12",
       "yellow",
       []
     ],
     [
       "lcd:LED",
-      "mcu:21",
+      "mcu:18",
       "purple",
       []
     ],
@@ -120,19 +120,19 @@
     ],
     [
       "batt:VCC",
-      "mcu:3V3",
+      "mcu:3V3.1",
       "red",
       []
     ],
     [
       "batt:SIG",
-      "mcu:32",
+      "mcu:6",
       "cyan",
       []
     ],
     [
       "btn:1.l",
-      "mcu:33",
+      "mcu:15",
       "orange",
       []
     ],
@@ -150,25 +150,25 @@
     ],
     [
       "buzzer:2",
-      "mcu:25",
+      "mcu:17",
       "purple",
       []
     ],
     [
       "sender:EN",
-      "mcu:26",
+      "mcu:7",
       "red",
       []
     ],
     [
       "sender:VTOP",
-      "mcu:34",
+      "mcu:4",
       "orange",
       []
     ],
     [
       "sender:VS",
-      "mcu:35",
+      "mcu:5",
       "green",
       []
     ],

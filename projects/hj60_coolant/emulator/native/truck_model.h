@@ -7,7 +7,7 @@ float ohmsToC(float rs);  // from the sketch
 enum SenderMode { SENDER_MODE_A, SENDER_MODE_B };
 extern SenderMode senderMode;
 
-const int FEED = 34, SENDER = 35, BUZZER = 25, EXCITE = 26, BATT = 32, BUTTON = 33;
+const int FEED = 4, SENDER = 5, BUZZER = 17, EXCITE = 7, BATT = 6, BUTTON = 15;  // ESP32-S3 pins
 const double RG = 25.0, RATIO = 7.8, RREF = 100.0;
 
 // Sender resistance for a temperature, same Beta fit as the sketch
