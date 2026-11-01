@@ -1,5 +1,9 @@
 .DS_Store
-.kiro/
+# Kiro: keep steering (agent rules), ignore local settings
+.kiro/settings/
 
 # local Hashnode API token (never commit)
 .hashnode.env
+
+# build outputs (arduino-cli, native tests, wokwi logs/screenshots)
+build/

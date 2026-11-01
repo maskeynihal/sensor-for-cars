@@ -1,65 +1,51 @@
 # sensor-for-cars
 
-Arduino UNO R4 WiFi water + air monitor with an animated 1.3" SH1106 OLED
-("LC78 OFFROAD").
+Microcontroller projects for the car (sensors, displays, alarms), built so a coding agent can develop and
+test them on a Mac with emulators before anything is flashed to a real board.
 
-## Folder map
+## Projects
 
-All sketches live under `sketches/`.
-
-| Folder | What it is | Keep? |
+| Project | Board | What |
 |---|---|---|
-| `sketches/water_monitor/` | **Final build** -- DS18B20 + DHT22 + OLED + buzzer | yes |
-| `sketches/i2c_address_finder/` | I2C scanner, finds the OLED address (0x3C) | utility |
-| `sketches/blink_led/` | Minimal blink on D8, first board smoke-test | utility |
-| `sketches/lc78_oled_animation/` | Early OLED-only LC78 animation, **no sensors** (superseded by `water_monitor/`) | history |
-| `libraries/` | Third-party Arduino libraries (do not edit) | yes |
+| [water_monitor](projects/water_monitor/) | Arduino UNO R4 WiFi | **LC78 OFFROAD**: DS18B20 water probe, DHT22 air, animated SH1106 OLED, buzzer alarm |
+| [_utilities](projects/_utilities/) | any | blink, I2C scanner |
+| [_archive](projects/_archive/) | | superseded sketches |
 
-> `sketches/lc78_oled_animation/` is an earlier experiment kept for reference.
-> Only `sketches/water_monitor/` is the shipping sketch.
+## Layout
+
+```
+projects/<p>/firmware/<p>/<p>.ino        uploadable sketch (real board)
+projects/<p>/emulator/wokwi/<p>_sim/     sim copy, where changes are made + Wokwi circuit/scenarios
+projects/<p>/emulator/native/            host tests (run against both copies)
+projects/<p>/docs/                       wiring, BOM, runtime architecture
+libraries/                               vendored Arduino libraries (don't edit)
+tools/native/                            Arduino mocks + test runner
+templates/project/                       new-project skeleton
+docs/{ideas,adr,howto,architecture}/     repo-wide docs
+```
+
+Why it's split this way: [ADR 0003](docs/adr/0003-projects-layout-firmware-vs-emulator.md),
+[ADR 0004](docs/adr/0004-two-tier-emulation.md).
 
 ## Quick start
 
-1. Open `sketches/water_monitor/water_monitor.ino` in the Arduino IDE.
-2. Install libraries (see docs): Adafruit SH110X, Adafruit GFX, OneWire,
-   DallasTemperature, DHT sensor library (+ Adafruit Unified Sensor).
-3. Board: **Arduino UNO R4 WiFi**. Wire per [`docs/markdown/README.md`](docs/markdown/README.md)
-   (or open the interactive [`docs/html/index.html`](docs/html/index.html) in a browser).
-4. Upload. Open Serial Monitor at **9600 baud**.
-
-## Build from the command line (arduino-cli)
-
-The libraries this project needs are already vendored in `libraries/`, so you
-do not have to install anything by name — just point arduino-cli at that folder
-with `--libraries`.
-
 ```sh
-# one-time: install the board core
-arduino-cli core update-index
-arduino-cli core install arduino:renesas_uno
-
-# compile using the repo's own libraries/ folder
-arduino-cli compile \
-  --fqbn arduino:renesas_uno:unor4wifi \
-  --libraries ./libraries \
-  sketches/water_monitor
-
-# find your board's port (Port column; e.g. /dev/cu.usbmodemXXXX)
-arduino-cli board list
-
-# upload (replace the port with the one from 'arduino-cli board list')
-arduino-cli upload \
-  --fqbn arduino:renesas_uno:unor4wifi \
-  --libraries ./libraries \
-  -p /dev/cu.usbmodemXXXX \
-  sketches/water_monitor
+make doctor                    # arduino-cli, wokwi-cli, clang++, cores, token
+make test P=water_monitor      # 13 host tests, sim copy + firmware
+make build P=water_monitor     # compile for the Wokwi board (AVR Uno) + the real board (UNO R4 WiFi)
+make sim P=water_monitor       # Wokwi scenarios (needs WOKWI_CLI_TOKEN)
+make promote P=water_monitor   # tested sim copy -> firmware (gated, auto-rollback)
+make upload P=water_monitor PORT=/dev/cu.usbmodemXXXX
+make new P=<name> FQBN=... SIM_FQBN=...   # or /new-project in Claude Code
+make help
 ```
 
-Prefer the registry instead of the vendored copies? Install them by name once:
+## Working with an agent
 
-```sh
-arduino-cli lib install "Adafruit SH110X" "Adafruit GFX Library" \
-  "OneWire" "DallasTemperature" "DHT sensor library"
-```
+- Agent rules: [AGENTS.md](AGENTS.md). Claude Code also reads [CLAUDE.md](CLAUDE.md) and `.claude/commands/`, and
+  Kiro reads `.kiro/steering/`.
+- Workflow diagram: [docs/architecture/dev-workflow.md](docs/architecture/dev-workflow.md)
+- How-tos: [docs/howto/](docs/howto/). Decisions: [docs/adr/](docs/adr/). Ideas: [docs/ideas/](docs/ideas/)
 
-Then compile without the `--libraries` flag.
+The loop: the agent edits the **sim copy**, then runs host tests and Wokwi, then promotes to **firmware**. You
+upload.

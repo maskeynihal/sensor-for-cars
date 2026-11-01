@@ -1,0 +1,6 @@
+name: '__NAME__ smoke'
+version: 1
+author: 'maskeynihal'
+steps:
+  - wait-serial: '__NAME__ boot ok'
+  - wait-serial: 'heartbeat 1'

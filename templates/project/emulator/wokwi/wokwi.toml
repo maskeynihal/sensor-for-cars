@@ -1,0 +1,6 @@
+# Wokwi project for the __NAME__ SIM copy (__SIM_BOARD__).
+# Build first: make build-sim P=__NAME__
+[wokwi]
+version = 1
+firmware = '../../../../build/__NAME__/sim/__NAME___sim.ino.__FW_EXT__'
+elf = '../../../../build/__NAME__/sim/__NAME___sim.ino.elf'
