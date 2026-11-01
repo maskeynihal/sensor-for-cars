@@ -9,3 +9,4 @@ project README. Decisions that come out of an idea go in [`../adr/`](../adr/).
 | Date | Idea | Status |
 |---|---|---|
 | 2026-11-01 | [Water + air temperature monitor](2026-11-01-water-monitor.md) | Building -> projects/water_monitor |
+| 2026-11-01 | [HJ60 coolant temperature from the OEM sender](2026-11-01-hj60-coolant.md) | Building -> projects/hj60_coolant |

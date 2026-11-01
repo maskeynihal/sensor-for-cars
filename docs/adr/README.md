@@ -10,3 +10,6 @@ Format: [0000-template.md](0000-template.md). New ADR: `/adr <title>` (Claude Co
 | [0004](0004-two-tier-emulation.md) | Native host tests + Wokwi | Accepted | all |
 | [0005](0005-sim-display-shim-sh1106.md) | SH1106 → SSD1306 shim for Wokwi | Accepted | water_monitor |
 | [0006](0006-water-monitor-sim-on-avr-uno.md) | water_monitor sim on AVR Uno | Accepted | water_monitor |
+| [0007](0007-hj60-coolant-on-esp32-devkit.md) | hj60_coolant on ESP32 DevKit V1 | Accepted | hj60_coolant |
+| [0008](0008-hj60-read-oem-sender-ratiometric.md) | Read the OEM gauge sender ratiometrically | Proposed | hj60_coolant |
+| [0009](0009-hj60-24v-power-front-end.md) | 24 V automotive power front end | Proposed | hj60_coolant |
