@@ -23,10 +23,13 @@ public:
   void drawTriangle(int16_t, int16_t, int16_t, int16_t, int16_t, int16_t, uint16_t) {}
   void fillTriangle(int16_t, int16_t, int16_t, int16_t, int16_t, int16_t, uint16_t) {}
   void drawBitmap(int16_t, int16_t, const uint8_t *, int16_t, int16_t, uint16_t) {}
+  void drawRGBBitmap(int16_t, int16_t, const uint16_t *, int16_t, int16_t) {}
+  void drawRGBBitmap(int16_t, int16_t, uint16_t *, int16_t, int16_t) {}
   void fillScreen(uint16_t) { sim::frameText.clear(); }
 
   void setCursor(int16_t x, int16_t y) { cx_ = x; cy_ = y; sim::frameText.push_back('\n'); }
   void setTextSize(uint8_t) {}
+  void setTextSize(uint8_t, uint8_t) {}
   void setTextColor(uint16_t) {}
   void setTextColor(uint16_t, uint16_t) {}
   void setTextWrap(bool) {}

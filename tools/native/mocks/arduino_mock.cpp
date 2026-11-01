@@ -64,7 +64,11 @@ long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-void pinMode(uint8_t pin, uint8_t mode) { if (pin < sim::kPins) sim::pinModeOf[pin] = mode; }
+void pinMode(uint8_t pin, uint8_t mode) {
+  if (pin >= sim::kPins) return;
+  sim::pinModeOf[pin] = mode;
+  if (mode == INPUT_PULLUP) sim::pinLevel[pin] = HIGH;  // idle level of a pulled-up input
+}
 
 void digitalWrite(uint8_t pin, uint8_t val) {
   if (pin >= sim::kPins) return;

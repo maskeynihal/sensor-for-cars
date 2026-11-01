@@ -1,27 +1,27 @@
-# Wokwi can't simulate the resistor dividers or the pulsing regulator, so the
-# two potentiometers stand in for the post-divider ADC voltages (0..3.3 V).
-# Wokwi's ESP32 ADC is not ideal: measured V ~= 3.47 * position + 0.137 V
-# (2026-11-01 run), so positions are picked from that, not from 3.3 * position.
-#   feed   0.30  -> 1.18 V at the ADC (9.2 V at the tap with the 7.8:1 divider)
-#   sender 0.206 -> k 0.72 -> ~84 C (OK)
-#   sender 0.12  -> k 0.47 -> ~120 C (ALARM)
-#   sender 0.30  -> k 1.00 -> FAULT-OPEN
-# Pulsing, bounce and the no-feed fault are covered by the native tests.
-name: 'hj60_coolant smoke'
+# Mode B (direct). The custom chip "sender" (chips/hj60-sender.chip.c) stands
+# in for 3.3 V -> Rref 100 ohm -> sender. It outputs Vtop/2 on GPIO34 and Vs on
+# GPIO35 only while GPIO26 (excitation) is high, like the real circuit.
+# The battery is a potentiometer on GPIO32: 0.437 -> ~12.9 V.
+# Wokwi's ESP32 ADC model adds an offset of about +0.14 V. The offset does not
+# cancel in the ratio, so the sim reads low at the hot end (85 C -> ~76 C,
+# 115 C -> ~97 C). The real board gets ADC_OFFSET_MV from step M5. Thus the
+# scenario uses 145 C for ALARM and checks states, not exact temperatures.
+# Pulsing, bounce and mode A are covered by the native tests.
+name: 'hj60_coolant smoke (mode B)'
 version: 1
 author: 'maskeynihal'
 steps:
   - wait-serial: 'hj60_coolant boot ok'
   - set-control:
-      part-id: feed
+      part-id: batt
       name: position
-      value: 0.3
+      value: 0.437
   - set-control:
       part-id: sender
-      name: position
-      value: 0.206
+      name: temperature
+      value: 85
   - delay: 1500ms
-  - wait-serial: 'State:OK'
+  - wait-serial: 'Mode:B  State:OK'
   - expect-pin:
       part-id: mcu
       name: 25
@@ -29,8 +29,8 @@ steps:
 
   - set-control:
       part-id: sender
-      name: position
-      value: 0.12
+      name: temperature
+      value: 145
   - wait-serial: 'State:ALARM'
   - delay: 200ms
   - expect-pin:
@@ -40,9 +40,17 @@ steps:
 
   - set-control:
       part-id: sender
-      name: position
-      value: 0.3
+      name: open
+      value: 1
   - wait-serial: 'State:FAULT-OPEN'
-  # Keep running past make sim's 8 s OLED screenshot; ending earlier makes
-  # wokwi-cli wait for the screenshot until its 30 s timeout.
+
+  - set-control:
+      part-id: sender
+      name: open
+      value: 0
+  - set-control:
+      part-id: sender
+      name: backfeed
+      value: 3.3
+  - wait-serial: 'State:FAULT-BACKFEED'
   - delay: 3000ms
