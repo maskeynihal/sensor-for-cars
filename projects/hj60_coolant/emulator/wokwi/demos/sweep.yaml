@@ -1,0 +1,48 @@
+# Console demo (not a test): sweeps the simulated sender so the serial
+# console shows the Config, Raw and state lines for each case.
+#   make sim P=hj60_coolant S=demos/sweep.yaml
+# Wokwi's ADC model reads a few degrees low at the hot end (see smoke.yaml).
+name: 'hj60_coolant console sweep'
+version: 1
+author: 'maskeynihal'
+steps:
+  - wait-serial: 'Config:'
+  - set-control:
+      part-id: sender
+      name: temperature
+      value: 40
+  - delay: 2500ms
+  - set-control:
+      part-id: sender
+      name: temperature
+      value: 70
+  - delay: 2500ms
+  - set-control:
+      part-id: sender
+      name: temperature
+      value: 90
+  - delay: 2500ms
+  - set-control:
+      part-id: sender
+      name: temperature
+      value: 108
+  - delay: 2500ms
+  - set-control:
+      part-id: sender
+      name: temperature
+      value: 125
+  - delay: 2500ms
+  - set-control:
+      part-id: sender
+      name: open
+      value: 1
+  - delay: 2500ms
+  - set-control:
+      part-id: sender
+      name: open
+      value: 0
+  - set-control:
+      part-id: sender
+      name: backfeed
+      value: 3.3
+  - delay: 2500ms

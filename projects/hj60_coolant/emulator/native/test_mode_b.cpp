@@ -146,3 +146,14 @@ TEST(b_cold_engine_corrects_divider_load) {
   CHECK_NEAR(lastCoolant(), 20.0, 0.5);
   CHECK_CONTAINS(lastLine(), "State:OK");
 }
+
+TEST(b_console_shows_config_and_raw_values) {
+  attachB();
+  setup();
+  CHECK_CONTAINS(sim::serialOut, "Config: Mode:B  Rref:220ohm  Div:1.467  Load:17600ohm  Warn:100C  Alarm:105C");
+  runAt(90.0);
+  // Vtop 3.2 V / 1.467 = 2182 mV at GPIO4.
+  CHECK_CONTAINS(sim::serialOut, "Raw: GPIO4:2182mV  GPIO5:");
+  CHECK_CONTAINS(sim::serialOut, "GPIO5:432mV  Vtop:3.20V  Vs:0.63V  Rp:54.3ohm");
+  CHECK_CONTAINS(sim::serialOut, "  Pairs:10  OffHits:0/10");
+}

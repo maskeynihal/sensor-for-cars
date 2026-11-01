@@ -43,6 +43,8 @@ Wokwi screenshots (ILI9341 320x240 stand-in, taken on the classic ESP32 before t
 ```sh
 make test     P=hj60_coolant     # host tests, no hardware
 make sim      P=hj60_coolant     # Wokwi scenarios (needs WOKWI_CLI_TOKEN)
+make sim      P=hj60_coolant S=demos/sweep.yaml   # console demo: 40 -> 125 C, open, backfeed
+make sim-live P=hj60_coolant     # 60 s free run, serial in the terminal
 make promote  P=hj60_coolant     # sim copy -> firmware
 make upload   P=hj60_coolant PORT=/dev/cu.usbserial-XXXX   # check senderMode first
 ```

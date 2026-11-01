@@ -41,7 +41,11 @@
 //  Screens: BOOT -> CHECK -> MAIN / GRID / WATER (button cycles).
 //           WARN and ALARM switch to WATER. RPM and SPEED are DEMO.
 //
-//  Serial log @ 115200, once per second:
+//  Serial log @ 115200. At boot, a Config line. Then once per second a Raw
+//  line (pin millivolts and voltages, for checking the wiring) and the
+//  state line:
+//    Config: Mode:B  Rref:220ohm  Div:1.467  Load:17600ohm  Warn:100C  Alarm:105C  BatterySense:0
+//    Raw: GPIO4:2182mV  GPIO5:261mV  Vtop:3.20V  Vs:0.38V  Rp:33.6ohm  Pairs:10  OffHits:0/10
 //    Coolant: 92.4C  Rs:52.1ohm  k:0.676  Feed:11.7V  Batt:12.9V  Mode:A  State:OK
 //    Coolant: 92.4C  Rs:52.1ohm  k:0.343  Vtop:3.00V  Batt:12.9V  Mode:B  State:OK
 //    Coolant: --  Rs:--  k:--  Feed:--  Batt:12.9V  Mode:A  State:FAULT-NOFEED
@@ -121,6 +125,9 @@ enum Screen { SCR_BOOT, SCR_CHECK, SCR_MAIN, SCR_GRID, SCR_WATER };
 float kSamples[MAX_PAIRS];
 int kCount = 0;
 float refSum = 0;          // A: feed volts, B: Vtop volts
+float sigSum = 0;          // A: sender wire volts, B: Vs volts
+float rawRefV = NAN, rawSigV = NAN, rawRp = NAN;   // last window, for the Raw log line
+int rawPairs = 0, rawOffHits = 0, rawOffSamples = 0;
 int backfeedHits = 0, offSamples = 0;
 float battSum = 0;
 int battCount = 0;
@@ -166,10 +173,11 @@ float pinVolts(uint8_t pin, float ratio) {
 // ===================================================================
 //  Sampling
 // ===================================================================
-void addPair(float k, float ref) {
+void addPair(float k, float ref, float sig) {
   if (kCount >= MAX_PAIRS) return;
   kSamples[kCount++] = k;
   refSum += ref;
+  sigSum += sig;
 }
 
 // A: one feed/sender/feed triple, kept only if the feed is on and steady.
@@ -180,7 +188,7 @@ void samplePairA() {
   if (f1 < FEED_ON_V || f2 < FEED_ON_V) return;
   if (fabs(f1 - f2) > EDGE_TOL * max(f1, f2)) return;
   float f = (f1 + f2) / 2.0;
-  addPair(s / f, f);
+  addPair(s / f, f, s);
 }
 
 // B: off-check, excitation on, settle, read, excitation off. Non-blocking.
@@ -198,7 +206,7 @@ void serviceExcitationB() {
     float vs = pinVolts(SENDER_PIN, VS_RATIO);
     digitalWrite(EXCITE_PIN, LOW);
     exciteOn = false;
-    if (vtop >= EXCITE_MIN_V) addPair(vs / vtop, vtop);
+    if (vtop >= EXCITE_MIN_V) addPair(vs / vtop, vtop, vs);
   }
 }
 
@@ -234,6 +242,7 @@ void setState(State next) {
 void clearReading() { coolantC = senderOhms = ratioK = NAN; }
 
 void evaluateWindow() {
+  rawRp = NAN;
   if (battCount > 0) battV = battSum / battCount;
   battSum = 0; battCount = 0;
 
@@ -248,6 +257,7 @@ void evaluateWindow() {
     float rRef = senderMode == SENDER_MODE_A ? GAUGE_R_OHMS : REF_R_OHMS;
     float kOpen = senderMode == SENDER_MODE_A ? K_OPEN_A : K_OPEN_B;
     float rp = ratioK < 1.0 ? rRef * ratioK / (1.0 - ratioK) : INFINITY;
+    rawRp = rp;
     // B: rp is the sender in parallel with the Vs divider. Remove the divider.
     if (senderMode == SENDER_MODE_B && rp < VS_LOAD_OHMS) rp = rp * VS_LOAD_OHMS / (VS_LOAD_OHMS - rp);
     else if (senderMode == SENDER_MODE_B) rp = INFINITY;
@@ -270,7 +280,11 @@ void evaluateWindow() {
     clearReading(); refV = NAN;
     setState(ST_NOFEED);
   }
-  kCount = 0; refSum = 0;
+  rawPairs = kCount;
+  rawRefV = kCount ? refSum / kCount : NAN;
+  rawSigV = kCount ? sigSum / kCount : NAN;
+  rawOffHits = backfeedHits; rawOffSamples = offSamples;
+  kCount = 0; refSum = 0; sigSum = 0;
   backfeedHits = 0; offSamples = 0;
 }
 
@@ -295,6 +309,28 @@ void printOr(const char *label, float v, int digits, const char *unit) {
   Serial.print(label);
   if (isnan(v)) Serial.print(F("--"));
   else { Serial.print(v, digits); Serial.print(unit); }
+}
+
+// Raw values for checking the wiring: pin millivolts (after ADC_OFFSET_MV),
+// the voltages before the dividers, and the resistance before corrections.
+void logRaw() {
+  float ratio = senderMode == SENDER_MODE_A ? DIVIDER_RATIO : VTOP_RATIO;
+  Serial.print(F("Raw: GPIO4:"));
+  if (isnan(rawRefV)) Serial.print(F("--")); else { Serial.print((int)lround(rawRefV / ratio * 1000)); Serial.print(F("mV")); }
+  Serial.print(F("  GPIO5:"));
+  if (isnan(rawSigV)) Serial.print(F("--")); else { Serial.print((int)lround(rawSigV / ratio * 1000)); Serial.print(F("mV")); }
+  printOr(senderMode == SENDER_MODE_A ? "  Feed:" : "  Vtop:", rawRefV, 2, "V");
+  printOr(senderMode == SENDER_MODE_A ? "  F:" : "  Vs:", rawSigV, 2, "V");
+  printOr("  Rp:", rawRp, 1, "ohm");
+  Serial.print(F("  Pairs:"));
+  Serial.print(rawPairs);
+  if (senderMode == SENDER_MODE_B) {
+    Serial.print(F("  OffHits:"));
+    Serial.print(rawOffHits);
+    Serial.print('/');
+    Serial.print(rawOffSamples);
+  }
+  Serial.println();
 }
 
 void logLine() {
@@ -649,6 +685,16 @@ void setup() {
 
   Serial.print(F("hj60_coolant boot ok  Mode:"));
   Serial.println(senderMode == SENDER_MODE_A ? F("A (passive taps)") : F("B (direct, DASH GAUGE DISCONNECTED)"));
+  Serial.print(F("Config: Mode:"));
+  Serial.print(senderMode == SENDER_MODE_A ? 'A' : 'B');
+  if (senderMode == SENDER_MODE_A) { Serial.print(F("  Rg:")); Serial.print(GAUGE_R_OHMS, 1); Serial.print(F("ohm  Div:")); Serial.print(DIVIDER_RATIO, 3); }
+  else {
+    Serial.print(F("  Rref:")); Serial.print(REF_R_OHMS, 0); Serial.print(F("ohm  Div:")); Serial.print(VTOP_RATIO, 3);
+    Serial.print(F("  Load:")); Serial.print(VS_LOAD_OHMS, 0); Serial.print(F("ohm"));
+  }
+  Serial.print(F("  Warn:")); Serial.print(WARN_C, 0); Serial.print(F("C  Alarm:")); Serial.print(ALARM_C, 0);
+  Serial.print(F("C  AdcOffset:")); Serial.print(ADC_OFFSET_MV); Serial.print(F("mV  BatterySense:"));
+  Serial.println(batterySense ? 1 : 0);
   lastValid = millis();
   windowStart = millis();
   screenSince = millis();
@@ -672,6 +718,7 @@ void loop() {
   if (now - windowStart >= WINDOW_MS) {
     windowStart = now;
     evaluateWindow();
+    logRaw();
     logLine();
   }
   driveBuzzer();

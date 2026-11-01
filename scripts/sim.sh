@@ -16,9 +16,10 @@ mkdir -p "$BUILD/wokwi"
 cd "$WOKWI_DIR"
 
 if [[ "$arg" == "--interactive" ]]; then
+  shot=(--screenshot-part oled --screenshot-time 59000 --screenshot-file "$BUILD/wokwi/oled.png")
+  [[ "${SIM_SCREENSHOT:-on}" == "off" ]] && shot=()
   wokwi-cli . --timeout 60000 --timeout-exit-code 0 --interactive \
-    --serial-log-file "$BUILD/wokwi/serial.log" \
-    --screenshot-part oled --screenshot-time 59000 --screenshot-file "$BUILD/wokwi/oled.png"
+    --serial-log-file "$BUILD/wokwi/serial.log" ${shot[@]+"${shot[@]}"}
   exit 0
 fi
 

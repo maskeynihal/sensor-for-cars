@@ -74,6 +74,8 @@ Faults sound a double chirp every 5 s.
 | Line | Meaning |
 |---|---|
 | `hj60_coolant boot ok  Mode:B (direct, DASH GAUGE DISCONNECTED)` | setup() finished, with the mode |
+| `Config: Mode:B  Rref:220ohm  Div:1.467  Load:17600ohm  Warn:100C  Alarm:105C  AdcOffset:0mV  BatterySense:0` | Once at boot: the constants in use |
+| `Raw: GPIO4:2182mV  GPIO5:432mV  Vtop:3.20V  Vs:0.63V  Rp:54.3ohm  Pairs:10  OffHits:0/10` | Once per second, before the state line: pin millivolts, voltages before the dividers, resistance before the divider correction, valid samples, and backfeed hits (B) |
 | `Coolant: 92.4C  Rs:52.1ohm  k:0.676  Feed:11.7V  Batt:12.9V  Mode:A  State:OK` | Once per second, mode A |
 | `Coolant: 92.4C  Rs:52.1ohm  k:0.343  Vtop:3.00V  Batt:12.9V  Mode:B  State:OK` | Once per second, mode B |
 | `Coolant: --  Rs:--  k:--  Vtop:--  Batt:12.9V  Mode:B  State:FAULT-BACKFEED` | Missing values print `--` |
