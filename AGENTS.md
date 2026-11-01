@@ -81,7 +81,7 @@ Full diagram: [docs/architecture/dev-workflow.md](docs/architecture/dev-workflow
 
 ## Writing tests
 
-- Native: `projects/<p>/emulator/native/test_<p>.cpp`, using `TEST`/`CHECK*` from `tools/native/hwtest.h`. Each test runs in
+- Native: `projects/<p>/emulator/native/test_<p>.cpp`, using `TEST`/`CHECK*` from `tools/native/hwtest.h` (several `test_*.cpp` files are fine). Each test runs in
   a fresh forked process. Set inputs via `sim::` (`ds18b20C`, `dhtTempC`, `i2cDevices`, ...). Then call `setup()` and
   `sim::runFor(ms)`, and assert on `sim::pinLevel`, `sim::togglesBetween`, `sim::serialOut`, and `sim::lastFrameText`.
 - Wokwi: `emulator/wokwi/scenarios/<behaviour>.yaml`, using `wait-serial`, `set-control`, `expect-pin`, and `delay`.

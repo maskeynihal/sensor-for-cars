@@ -8,7 +8,7 @@ make promote P=water_monitor   # gated copy
 `scripts/promote.sh` runs these steps:
 1. Native tests on the sim copy. It stops on a failure.
 2. Compile the sim copy for `SIM_FQBN`.
-3. Back up the firmware `.ino` to `build/<p>/<p>.ino.bak`, then copy the sim `.ino` over the firmware.
+3. Back up the firmware folder to `build/<p>/firmware.bak/`. Then mirror the sim sketch folder into it: `<p>_sim.ino` becomes `<p>.ino`, and other tabs (`.h`, `.cpp`) are copied as-is. Files that exist only in firmware are deleted.
 4. Compile the firmware for the real `FQBN` and run the native tests on it. **If either fails, the backup is
    restored.**
 

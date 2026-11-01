@@ -4,6 +4,8 @@
 //  Each TEST runs in its own forked process, so sketch globals and
 //  function-local statics start fresh every test. A test that hangs
 //  (e.g. a sketch's `for(;;);`) is killed after 5 s and reported.
+//  main() lives in hwtest_main.cpp (linked once by scripts/test.sh), so a
+//  project can split tests across several test_*.cpp files.
 //
 //    TEST(buzzer_silent_when_cool) {
 //      sim::ds18b20C[0] = 25;
@@ -66,28 +68,3 @@ struct Reg { Reg(const char *n, void (*f)()) { registry().push_back({n, f}); } }
     if (_h.find(needle) != std::string::npos)                                                \
       hwtest::fail(__FILE__, __LINE__, std::string("did not expect \"") + (needle) + "\"");  \
   } while (0)
-
-int main(int argc, char **argv) {
-  const char *only = argc > 1 ? argv[1] : nullptr;
-  int passed = 0, failed = 0;
-  for (const hwtest::Case &c : hwtest::registry()) {
-    if (only && !std::strstr(c.name, only)) continue;
-    std::fflush(stdout);
-    pid_t pid = fork();
-    if (pid == 0) {
-      alarm(5);
-      sim::reset();
-      c.fn();
-      std::_Exit(0);
-    }
-    int status = 0;
-    waitpid(pid, &status, 0);
-    bool ok = WIFEXITED(status) && WEXITSTATUS(status) == 0;
-    if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM)
-      std::fprintf(stderr, "    timed out after 5 s (infinite loop in sketch?)\n");
-    std::printf("  %s  %s\n", ok ? "PASS" : "FAIL", c.name);
-    ok ? passed++ : failed++;
-  }
-  std::printf("\n%d passed, %d failed\n", passed, failed);
-  return failed ? 1 : 0;
-}

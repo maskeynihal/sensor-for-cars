@@ -19,9 +19,9 @@ case "$sim_fqbn" in
   arduino:avr:uno)        part=wokwi-arduino-uno;  ext=hex; sim_board="Arduino Uno (ATmega328P)" ;;
   arduino:avr:nano)       part=wokwi-arduino-nano; ext=hex; sim_board="Arduino Nano (ATmega328P)" ;;
   arduino:avr:mega)       part=wokwi-arduino-mega; ext=hex; sim_board="Arduino Mega 2560" ;;
-  esp32:esp32:esp32*)     part=board-esp32-devkit-c-v4; ext=merged.bin; sim_board="ESP32 DevKit C v4" ;;
   esp32:esp32:esp32s3*)   part=board-esp32-s3-devkitc-1; ext=merged.bin; sim_board="ESP32-S3 DevKitC-1" ;;
   esp32:esp32:esp32c3*)   part=board-esp32-c3-devkitm-1; ext=merged.bin; sim_board="ESP32-C3 DevKitM-1" ;;
+  esp32:esp32:esp32)      part=board-esp32-devkit-c-v4; ext=merged.bin; sim_board="ESP32 DevKit C v4" ;;
   rp2040:rp2040:*|arduino:mbed_rp2040:*) part=wokwi-pi-pico; ext=uf2; sim_board="Raspberry Pi Pico" ;;
   *) die "no Wokwi mapping for '$sim_fqbn'. Supported sims: Uno/Nano/Mega, ESP32(-S3/-C3), Pico. Add a case here." ;;
 esac

@@ -17,9 +17,13 @@ run_suite() {
   [[ -f "$ino" ]] || die "missing $ino"
   mkdir -p "$BUILD/native"
   info "native tests: $label (${ino#$ROOT/})"
+  # extra .cpp/.c tabs in the sketch folder are compiled too
+  local sketch_dir extra=()
+  sketch_dir="$(dirname "$ino")"
+  while IFS= read -r f; do extra+=("$f"); done < <(find "$sketch_dir" -maxdepth 1 \( -name '*.cpp' -o -name '*.c' \) | sort)
   "$CXX" -std=c++17 -g -O0 -Wall -Wno-unused-variable \
-    -I "$MOCKS" -I "$ROOT/tools/native" -I "$NATIVE_DIR" \
-    "$MOCKS/arduino_mock.cpp" "${tests[@]}" \
+    -I "$MOCKS" -I "$ROOT/tools/native" -I "$NATIVE_DIR" -I "$sketch_dir" \
+    "$MOCKS/arduino_mock.cpp" "$ROOT/tools/native/hwtest_main.cpp" "${tests[@]}" ${extra[@]+"${extra[@]}"} \
     -x c++ -include Arduino.h "$ino" \
     -o "$out"
   "$out" ${filter:+"$filter"}
